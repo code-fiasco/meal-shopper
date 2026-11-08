@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Stock · Meal Shopper{% endblock %}
+{% block content %}
+<h1>Stock</h1>
+<p>Record what is already in the pantry. Planning a meal or changing a price leaves these quantities as they are.</p>
+<form
+  class="filters"
+  method="get"
+  action="/stock/search"
+  hx-get="/stock/search"
+  hx-target="#stock-search-results"
+  hx-swap="innerHTML"
+  hx-push-url="true"
+>
+  <div class="field">
+    <label for="stock-q">Add an ingredient</label>
+    <input id="stock-q" name="q" type="search" value="{{ query }}" autocomplete="off">
+  </div>
+  <button type="submit">Search</button>
+</form>
+<div id="stock-search-results">
+  {% if searched %}
+  {% include "partials/stock_search_results.html" %}
+  {% endif %}
+</div>
+<div id="stock-editor" class="panel">{% if editor %}{% with control=editor %}{% include "partials/stock_control.html" %}{% endwith %}{% endif %}</div>
+{% include "partials/stock_results.html" %}
+{% endblock %}

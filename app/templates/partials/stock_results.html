@@ -1,0 +1,9 @@
+<div id="stock-results"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+  {% if items %}
+  {% for control in items %}
+  {% include "partials/stock_control.html" %}
+  {% endfor %}
+  {% else %}
+  <p>Nothing in stock yet. Search for an ingredient to record what you already have.</p>
+  {% endif %}
+</div>

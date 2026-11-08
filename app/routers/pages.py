@@ -21,11 +21,6 @@ def shopping(request: Request) -> Response:
     return _page(request, "shopping.html", "shopping")
 
 
-@router.get("/stock")
-def stock(request: Request) -> Response:
-    return _page(request, "stock.html", "stock")
-
-
 @router.get("/spending")
 def spending(request: Request) -> Response:
     return _page(request, "spending.html", "spending")

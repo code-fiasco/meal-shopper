@@ -1,0 +1,75 @@
+<article class="stock-control" id="{{ control.dom_id }}"{% if control_oob %} hx-swap-oob="outerHTML"{% endif %}>
+  <h2>{{ control.ingredient_name }}</h2>
+  {% if not control.ingredient_active %}
+  <p class="status">Archived</p>
+  {% endif %}
+  {% if control.quantity is none %}
+  <p class="status">Not in stock</p>
+  {% elif control.quantity == 0 %}
+  <p class="status">None left</p>
+  <p>{{ control.quantity | qty(control.canonical_symbol) }}</p>
+  {% else %}
+  <p class="status">In stock: {{ control.quantity | qty(control.canonical_symbol) }}</p>
+  {% endif %}
+  <p class="hint">Stored in {{ control.canonical_name }} ({{ control.canonical_symbol }}).</p>
+  {% if control.errors.action %}
+  <p class="field-error" role="alert">Error: {{ control.errors.action }}</p>
+  {% endif %}
+  {% if control.errors.ingredient_id %}
+  <p class="field-error" role="alert">Error: {{ control.errors.ingredient_id }}</p>
+  {% endif %}
+  <form
+    method="post"
+    action="/stock/items"
+    hx-post="/stock/items"
+    hx-target="#{{ control.dom_id }}"
+    hx-swap="outerHTML"
+  >
+    <input type="hidden" name="ingredient_id" value="{{ control.ingredient_id }}">
+    <input type="hidden" name="placement" value="{{ control.placement }}">
+    <div class="stock-entry">
+      <div class="field">
+        <label for="{{ control.dom_id }}-quantity">Quantity</label>
+        <input
+          id="{{ control.dom_id }}-quantity"
+          name="quantity"
+          type="text"
+          inputmode="decimal"
+          value="{{ control.quantity_input }}"
+          {% if control.errors.quantity %}aria-invalid="true" aria-describedby="{{ control.dom_id }}-quantity-error"{% endif %}
+        >
+        {% if control.errors.quantity %}
+        <p id="{{ control.dom_id }}-quantity-error" class="field-error" role="alert">Error: {{ control.errors.quantity }}</p>
+        {% endif %}
+      </div>
+      <div class="field">
+        <label for="{{ control.dom_id }}-unit">Unit</label>
+        <select
+          id="{{ control.dom_id }}-unit"
+          name="unit_id"
+          {% if control.errors.unit_id %}aria-invalid="true" aria-describedby="{{ control.dom_id }}-unit-error"{% endif %}
+        >
+          {% for unit in control.units %}
+          <option value="{{ unit.id }}" {% if control.unit_id == unit.id|string %}selected{% endif %}>{{ unit.name }} ({{ unit.symbol }})</option>
+          {% endfor %}
+        </select>
+        {% if control.errors.unit_id %}
+        <p id="{{ control.dom_id }}-unit-error" class="field-error" role="alert">Error: {{ control.errors.unit_id }}</p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="actions">
+      <button type="submit" name="action" value="set">Set quantity</button>
+      <button type="submit" name="action" value="add">Add</button>
+      <button type="submit" name="action" value="subtract">Subtract</button>
+      <button
+        type="submit"
+        name="action"
+        value="clear"
+        class="button-secondary"
+        data-confirm="Mark {{ control.ingredient_name }} as none left?"
+        onclick="return confirm(this.dataset.confirm)"
+      >None left</button>
+    </div>
+  </form>
+</article>

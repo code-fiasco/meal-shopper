@@ -1,0 +1,14 @@
+<ul class="search-results" aria-label="Ingredients to add">
+  {% for hit in matches %}
+  <li>
+    <a
+      href="/stock/ingredients/{{ hit.id }}"
+      hx-get="/stock/ingredients/{{ hit.id }}"
+      hx-target="#stock-editor"
+      hx-swap="innerHTML"
+    >{{ hit.name }} ({{ hit.unit_symbol }}){% if hit.quantity is not none and hit.quantity > 0 %} — {{ hit.quantity | qty(hit.unit_symbol) }} in stock{% endif %}</a>
+  </li>
+  {% else %}
+  <li>No matching ingredients.</li>
+  {% endfor %}
+</ul>

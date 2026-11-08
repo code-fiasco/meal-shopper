@@ -1,0 +1,6 @@
+{% include "partials/stock_control.html" %}
+{% if echo %}
+{% with control=echo, control_oob=true %}
+{% include "partials/stock_control.html" %}
+{% endwith %}
+{% endif %}

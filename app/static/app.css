@@ -292,11 +292,29 @@ td {
   list-style: none;
 }
 
-.search-results button {
+.search-results button,
+.search-results a {
   width: 100%;
   justify-content: flex-start;
   background: var(--paper);
   color: var(--ink);
+  margin-bottom: 0.35rem;
+}
+
+.stock-control h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+}
+
+.stock-entry {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.stock-entry .field {
+  flex: 1 1 12rem;
 }
 
 main.wide {

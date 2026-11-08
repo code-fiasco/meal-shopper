@@ -11,6 +11,7 @@ from app.models.purchase import (
     PurchasePriceHistory,
 )
 from app.models.shop import Shop
+from app.models.stock import PantryStock
 from app.models.unit import Unit, UnitFamily
 
 __all__ = [
@@ -18,6 +19,7 @@ __all__ = [
     "Ingredient",
     "IngredientConversion",
     "Meal",
+    "PantryStock",
     "PlannerEntry",
     "PlannerWeek",
     "RecipeIngredient",
