@@ -26,11 +26,6 @@ def meals(request: Request) -> Response:
     return _page(request, "meals.html", "meals")
 
 
-@router.get("/ingredients")
-def ingredients(request: Request) -> Response:
-    return _page(request, "ingredients.html", "ingredients")
-
-
 @router.get("/shopping")
 def shopping(request: Request) -> Response:
     return _page(request, "shopping.html", "shopping")

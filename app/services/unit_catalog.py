@@ -36,6 +36,27 @@ UNIT_SEEDS: tuple[UnitSeed, ...] = (
 )
 
 
+FAMILY_LABELS: dict[UnitFamily, str] = {
+    UnitFamily.WEIGHT: "Weight",
+    UnitFamily.VOLUME: "Volume",
+    UnitFamily.COUNT: "Count",
+    UnitFamily.KITCHEN: "Kitchen",
+}
+
+
+def units_by_family(session: Session) -> list[tuple[str, list[Unit]]]:
+    """Units grouped for a select list, in family order."""
+    stored = list(session.scalars(select(Unit).order_by(Unit.name)))
+    grouped: dict[UnitFamily, list[Unit]] = {family: [] for family in UnitFamily}
+    for unit in stored:
+        grouped[unit.family].append(unit)
+    return [
+        (FAMILY_LABELS[family], grouped[family])
+        for family in UnitFamily
+        if grouped[family]
+    ]
+
+
 def seed_units(session: Session) -> int:
     """Insert missing built-in units. A second call inserts nothing."""
     stored = set(session.scalars(select(Unit.symbol)))

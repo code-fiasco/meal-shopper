@@ -1,11 +1,7 @@
 """Navigation and placeholder pages."""
 
-from collections.abc import Iterator
-
 import pytest
 from fastapi.testclient import TestClient
-
-from app.main import create_app
 
 PAGES = (
     ("/", "Planner"),
@@ -15,12 +11,6 @@ PAGES = (
     ("/stock", "Stock"),
     ("/spending", "Spending"),
 )
-
-
-@pytest.fixture
-def client(database_url: str) -> Iterator[TestClient]:
-    with TestClient(create_app()) as test_client:
-        yield test_client
 
 
 @pytest.mark.parametrize(("path", "heading"), PAGES)

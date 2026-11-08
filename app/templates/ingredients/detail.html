@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ ingredient.name }} · Meal Shopper{% endblock %}
+{% block content %}
+<p><a href="/ingredients">Ingredients</a></p>
+<h1>{{ ingredient.name }}</h1>
+{% if not ingredient.is_active %}
+<p class="status">Archived</p>
+{% else %}
+<p class="status">Active</p>
+{% endif %}
+<p>Canonical unit: {{ ingredient.canonical_unit.name }} ({{ ingredient.canonical_unit.symbol }})</p>
+{% if ingredient.notes %}
+<p>{{ ingredient.notes }}</p>
+{% endif %}
+<p class="actions">
+  <a class="button" href="/ingredients/{{ ingredient.id }}/edit">Edit</a>
+  {% if ingredient.is_active %}
+  <details>
+    <summary>Archive</summary>
+    <form method="post" action="/ingredients/{{ ingredient.id }}/archive">
+      <p>Archiving keeps this ingredient on anything that already uses it.</p>
+      <button type="submit">Archive ingredient</button>
+    </form>
+  </details>
+  {% else %}
+  <form method="post" action="/ingredients/{{ ingredient.id }}/restore">
+    <button type="submit">Restore ingredient</button>
+  </form>
+  {% endif %}
+</p>
+<h2>Purchase options</h2>
+<p>Each price per {{ ingredient.canonical_unit.symbol }} is shown so you can compare. None is selected for you.</p>
+<p><a class="button" href="/ingredients/{{ ingredient.id }}/options/new">Add purchase option</a></p>
+{% if options %}
+<ul class="cards">
+  {% for option in options %}
+  <li>
+    <h3>{{ option.shop_name }}{% if not option.shop_is_active %} (shop archived){% endif %}</h3>
+    <p>{{ option.pack_label }}</p>
+    <p>Pack: {{ option.pack_quantity | qty(option.unit_symbol) }}</p>
+    <p>Price: {{ option.price_pence | gbp }}</p>
+    <p>Unit price: {{ option.unit_price | gbp_exact }} per {{ option.unit_symbol }}</p>
+    {% if not option.is_active %}
+    <p class="status">Archived</p>
+    {% endif %}
+    <p class="actions">
+      <a href="/ingredients/{{ ingredient.id }}/options/{{ option.id }}/edit">Edit</a>
+      <a
+        href="/ingredients/{{ ingredient.id }}/options/{{ option.id }}/history"
+        hx-get="/ingredients/{{ ingredient.id }}/options/{{ option.id }}/history"
+        hx-target="#history-{{ option.id }}"
+        hx-swap="innerHTML"
+      >Price history</a>
+      {% if option.is_active %}
+      <details>
+        <summary>Archive</summary>
+        <form method="post" action="/ingredients/{{ ingredient.id }}/options/{{ option.id }}/archive">
+          <p>Archiving keeps the price history.</p>
+          <button type="submit">Archive option</button>
+        </form>
+      </details>
+      {% else %}
+      <form method="post" action="/ingredients/{{ ingredient.id }}/options/{{ option.id }}/restore">
+        <button type="submit">Restore option</button>
+      </form>
+      {% endif %}
+    </p>
+    <div id="history-{{ option.id }}"></div>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No purchase options yet.</p>
+{% endif %}
+{% endblock %}

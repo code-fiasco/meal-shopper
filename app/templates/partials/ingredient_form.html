@@ -1,0 +1,72 @@
+<form method="post" action="{{ action }}">
+  {% if embed %}
+  <input type="hidden" name="embed" value="1">
+  {% endif %}
+  {% if duplicate_warning %}
+  <div class="warning" role="status">
+    <p>{{ duplicate_warning }}</p>
+    <label class="check">
+      <input type="checkbox" name="confirm_duplicate" value="yes" required>
+      Save anyway
+    </label>
+  </div>
+  {% endif %}
+  <div class="field">
+    <label for="ingredient-name">Name</label>
+    <input
+      id="ingredient-name"
+      name="name"
+      type="text"
+      value="{{ values.name }}"
+      maxlength="200"
+      required
+      {% if errors.name %}aria-invalid="true" aria-describedby="ingredient-name-error"{% endif %}
+    >
+    {% if errors.name %}
+    <p id="ingredient-name-error" class="field-error" role="alert">Error: {{ errors.name }}</p>
+    {% endif %}
+  </div>
+  <div class="field">
+    {% if unit_locked and locked_unit %}
+    <label for="canonical_unit_id">Canonical unit</label>
+    <input type="hidden" name="canonical_unit_id" value="{{ locked_unit.id }}">
+    <p id="canonical_unit_id">{{ locked_unit.name }} ({{ locked_unit.symbol }})</p>
+    <p class="hint">This unit stays because a purchase option or conversion already uses it.</p>
+    {% else %}
+    <label for="canonical_unit_id">Canonical unit</label>
+    <select
+      id="canonical_unit_id"
+      name="canonical_unit_id"
+      required
+      {% if errors.canonical_unit_id %}aria-invalid="true" aria-describedby="canonical-unit-error"{% endif %}
+    >
+      <option value="">Choose a unit</option>
+      {% for label, units in unit_groups %}
+      <optgroup label="{{ label }}">
+        {% for unit in units %}
+        <option value="{{ unit.id }}" {% if values.canonical_unit_id == unit.id|string %}selected{% endif %}>
+          {% if unit.name == unit.symbol %}{{ unit.symbol }}{% else %}{{ unit.name }} ({{ unit.symbol }}){% endif %}
+        </option>
+        {% endfor %}
+      </optgroup>
+      {% endfor %}
+    </select>
+    {% endif %}
+    {% if errors.canonical_unit_id %}
+    <p id="canonical-unit-error" class="field-error" role="alert">Error: {{ errors.canonical_unit_id }}</p>
+    {% endif %}
+  </div>
+  <div class="field">
+    <label for="ingredient-notes">Notes</label>
+    <textarea
+      id="ingredient-notes"
+      name="notes"
+      maxlength="2000"
+      {% if errors.notes %}aria-invalid="true" aria-describedby="ingredient-notes-error"{% endif %}
+    >{{ values.notes }}</textarea>
+    {% if errors.notes %}
+    <p id="ingredient-notes-error" class="field-error" role="alert">Error: {{ errors.notes }}</p>
+    {% endif %}
+  </div>
+  <button type="submit">Save ingredient</button>
+</form>

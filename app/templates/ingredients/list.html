@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Ingredients · Meal Shopper{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Ingredients</h1>
+  <p class="actions">
+    <a class="button" href="/ingredients/new">New ingredient</a>
+    <a class="button button-secondary" href="/shops">Shops</a>
+  </p>
+</div>
+<form
+  class="filters"
+  method="get"
+  action="/ingredients"
+  hx-get="/ingredients"
+  hx-trigger="keyup changed delay:300ms from:input, change from:select"
+  hx-target="#ingredient-results"
+  hx-swap="outerHTML"
+  hx-push-url="true"
+>
+  <div class="field">
+    <label for="q">Search</label>
+    <input id="q" name="q" type="search" value="{{ query }}" autocomplete="off">
+  </div>
+  <div class="field">
+    <label for="status">Show</label>
+    <select id="status" name="status">
+      <option value="active" {% if status == "active" %}selected{% endif %}>Active</option>
+      <option value="archived" {% if status == "archived" %}selected{% endif %}>Archived</option>
+      <option value="all" {% if status == "all" %}selected{% endif %}>All</option>
+    </select>
+  </div>
+  <button type="submit">Search</button>
+</form>
+{% include "partials/ingredient_results.html" %}
+{% endblock %}

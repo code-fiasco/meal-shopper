@@ -17,7 +17,16 @@ Product behaviour is specified in [docs/spec.md](docs/spec.md) (SRS v1.0).
 
 ## Status
 
-Foundation is in place: the container serves navigation and a health check, and the SQLite database lives on a host mount. Recipes, the planner, shopping, stock, and spending are not built yet.
+Ingredients and shops are usable:
+
+- Create and edit an ingredient with a canonical unit, notes, and a duplicate-name warning that can be overridden
+- Search the ingredient list and filter active or archived records
+- Archive an ingredient instead of deleting it
+- Record several purchase options per ingredient (shop, pack quantity, pack label, price) and compare the price per canonical unit
+- Keep price history when a pack price or quantity changes
+- Add, rename, and archive shops
+
+Recipes, the planner, shopping, stock, and spending are not built yet. The container still serves navigation and a health check, and the SQLite database lives on a host mount.
 
 ## Configuration
 
@@ -82,7 +91,7 @@ Confirm the file is still there and still has the migration stamp:
 test -f data/app.db && python -c "import sqlite3; print(sqlite3.connect('data/app.db').execute('select version_num from alembic_version').fetchone())"
 ```
 
-A surviving foundation database prints `('0001_initial',)`.
+A surviving database prints `('0002_catalog',)`.
 
 To back up, stop the container and copy `data/app.db`. Copy that file back to restore. Start the container only after the copy finishes.
 

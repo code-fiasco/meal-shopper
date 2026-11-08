@@ -1,0 +1,25 @@
+<div class="history">
+  {% if history %}
+  <table>
+    <caption>Prices, newest first</caption>
+    <thead>
+      <tr>
+        <th scope="col">Date</th>
+        <th scope="col">Price</th>
+        <th scope="col">Pack quantity</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in history %}
+      <tr>
+        <td>{{ row.recorded_at | local_dt(timezone_name) }}</td>
+        <td>{{ row.price_pence | gbp }}</td>
+        <td>{{ row.pack_quantity | qty(ingredient.canonical_unit.symbol) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No prices recorded.</p>
+  {% endif %}
+</div>

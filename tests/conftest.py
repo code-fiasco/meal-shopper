@@ -6,11 +6,13 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
+from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 import app.db as database
 from app.config import get_settings
 from app.db import dispose_engine, init_engine
+from app.main import create_app
 
 
 @pytest.fixture(autouse=True)
@@ -41,3 +43,11 @@ def session(database_url: str) -> Iterator[Session]:
     finally:
         db.rollback()
         db.close()
+
+
+@pytest.fixture
+def client(database_url: str) -> Iterator[TestClient]:
+    """HTTP client against a migrated temporary database."""
+    command.upgrade(Config("alembic.ini"), "head")
+    with TestClient(create_app()) as test_client:
+        yield test_client

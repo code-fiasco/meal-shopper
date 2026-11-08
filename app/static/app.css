@@ -27,6 +27,7 @@ body {
   color: var(--ink);
   font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
   line-height: 1.5;
+  overflow-wrap: break-word;
 }
 
 :focus-visible {
@@ -118,6 +119,159 @@ p {
   font-size: 1.0625rem;
 }
 
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: end;
+  margin: 1rem 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: min(100%, 16rem);
+  margin-bottom: 0.9rem;
+}
+
+label {
+  font-weight: 650;
+}
+
+input,
+select,
+textarea,
+button,
+summary {
+  font: inherit;
+  color: var(--ink);
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  max-width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 2px solid #44403c;
+  border-radius: 0.35rem;
+  background: var(--paper);
+}
+
+textarea {
+  min-height: 6rem;
+}
+
+button,
+.button,
+summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.45rem 0.85rem;
+  border: 2px solid var(--header);
+  border-radius: 0.35rem;
+  background: var(--header);
+  color: var(--header-text);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button-secondary,
+summary {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.field-error {
+  margin: 0;
+  padding: 0.45rem 0.65rem;
+  background: #fff4e5;
+  border-left: 4px solid #9a3412;
+  color: var(--ink);
+}
+
+.warning {
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  background: #fff4e5;
+  border-left: 4px solid #9a3412;
+}
+
+.hint,
+.status {
+  color: var(--ink);
+}
+
+.cards {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cards li {
+  padding: 0.85rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+}
+
+.cards li p,
+main p + p {
+  margin-top: 0.35rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+caption {
+  margin-bottom: 0.35rem;
+  text-align: left;
+  font-weight: 700;
+}
+
+th,
+td {
+  padding: 0.45rem 0.35rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+
+.check {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-weight: 650;
+}
+
+.check input {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
 @media (max-width: 36rem) {
   .site-header {
     padding-inline: 0.75rem;
@@ -125,5 +279,9 @@ p {
 
   nav a {
     padding-inline: 0.6rem;
+  }
+
+  main {
+    padding-inline: 0.75rem;
   }
 }

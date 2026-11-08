@@ -2,6 +2,7 @@
 
 from decimal import Decimal
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Ingredient, PurchaseOption, PurchasePriceHistory, Shop
@@ -43,6 +44,7 @@ def change_purchase_option(
     pack_quantity: Decimal | None = None,
     pack_label: str | None = None,
     is_active: bool | None = None,
+    shop: Shop | None = None,
 ) -> PurchaseOption:
     """Update a pack. Price and pack-size changes append a history row."""
     price_changed = False
@@ -59,10 +61,28 @@ def change_purchase_option(
         option.pack_label = _require_label(pack_label)
     if is_active is not None:
         option.is_active = is_active
+    if shop is not None:
+        option.shop = shop
     session.flush()
     if price_changed or pack_changed:
         _record_history(session, option)
     return option
+
+
+def list_price_history(
+    session: Session, option: PurchaseOption
+) -> list[PurchasePriceHistory]:
+    """Return snapshots newest first. Rows are never updated."""
+    return list(
+        session.scalars(
+            select(PurchasePriceHistory)
+            .where(PurchasePriceHistory.purchase_option_id == option.id)
+            .order_by(
+                PurchasePriceHistory.recorded_at.desc(),
+                PurchasePriceHistory.id.desc(),
+            )
+        )
+    )
 
 
 def _record_history(session: Session, option: PurchaseOption) -> None:

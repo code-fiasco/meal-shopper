@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · Meal Shopper{% endblock %}
+{% block content %}
+<p><a href="/shops">Shops</a></p>
+<h1>{{ title }}</h1>
+<form method="post" action="/shops">
+  <div class="field">
+    <label for="shop-name">Name</label>
+    <input
+      id="shop-name"
+      name="name"
+      type="text"
+      value="{{ values.name }}"
+      maxlength="200"
+      required
+      {% if errors.name %}aria-invalid="true" aria-describedby="shop-name-error"{% endif %}
+    >
+    {% if errors.name %}
+    <p id="shop-name-error" class="field-error" role="alert">Error: {{ errors.name }}</p>
+    {% endif %}
+  </div>
+  <div class="field">
+    <label for="shop-notes">Notes</label>
+    <input
+      id="shop-notes"
+      name="notes"
+      type="text"
+      value="{{ values.notes }}"
+      maxlength="1000"
+      {% if errors.notes %}aria-invalid="true" aria-describedby="shop-notes-error"{% endif %}
+    >
+    {% if errors.notes %}
+    <p id="shop-notes-error" class="field-error" role="alert">Error: {{ errors.notes }}</p>
+    {% endif %}
+  </div>
+  <button type="submit">Save shop</button>
+</form>
+{% endblock %}

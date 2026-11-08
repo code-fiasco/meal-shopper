@@ -1,0 +1,20 @@
+<div id="shop-field" class="field">
+  <label for="shop_id">Shop</label>
+  <select
+    id="shop_id"
+    name="shop_id"
+    required
+    {% if errors.shop_id %}aria-invalid="true" aria-describedby="shop-error"{% endif %}
+  >
+    <option value="">Choose a shop</option>
+    {% for shop in shops %}
+    <option value="{{ shop.id }}" {% if values.shop_id == shop.id|string %}selected{% endif %}>
+      {{ shop.name }}{% if not shop.is_active %} (archived){% endif %}
+    </option>
+    {% endfor %}
+  </select>
+  {% if errors.shop_id %}
+  <p id="shop-error" class="field-error" role="alert">Error: {{ errors.shop_id }}</p>
+  {% endif %}
+  <p><a href="/shops/new" hx-get="/shops/inline" hx-target="#shop-inline" hx-swap="innerHTML">Add new shop</a></p>
+</div>

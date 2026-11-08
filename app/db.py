@@ -52,10 +52,14 @@ def dispose_engine() -> None:
 
 
 def get_db() -> Generator[Session, None, None]:
-    """Yield a session and close it when the request finishes."""
+    """Yield a session, commit on success, and close it when the request finishes."""
     session = SessionLocal()
     try:
         yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
     finally:
         session.close()
 

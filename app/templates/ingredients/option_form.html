@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · Meal Shopper{% endblock %}
+{% block content %}
+<p><a href="/ingredients/{{ ingredient.id }}">{{ ingredient.name }}</a></p>
+<h1>{{ title }}</h1>
+{% include "partials/purchase_option_form.html" %}
+{% endblock %}

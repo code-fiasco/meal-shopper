@@ -1,0 +1,24 @@
+<div id="ingredient-results" aria-live="polite">
+  {% if items %}
+  <ul class="cards">
+    {% for item in items %}
+    <li>
+      <a href="/ingredients/{{ item.id }}">{{ item.name }}</a>
+      <p>Unit: {{ item.unit_name }} ({{ item.unit_symbol }})</p>
+      {% if item.cheapest_unit_price is none %}
+      <p>Cheapest unit price: no price</p>
+      {% else %}
+      <p>Cheapest unit price: {{ item.cheapest_unit_price | gbp_exact }} per {{ item.unit_symbol }}</p>
+      {% endif %}
+      {% if not item.is_active %}
+      <p class="status">Archived</p>
+      {% elif status == "all" %}
+      <p class="status">Active</p>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No ingredients match this search.</p>
+  {% endif %}
+</div>

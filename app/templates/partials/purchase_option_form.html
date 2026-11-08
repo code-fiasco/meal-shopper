@@ -1,0 +1,50 @@
+<form method="post" action="{{ action }}">
+  {% include "partials/shop_field.html" %}
+  <div class="field">
+    <label for="pack_quantity">Pack quantity ({{ ingredient.canonical_unit.symbol }})</label>
+    <input
+      id="pack_quantity"
+      name="pack_quantity"
+      type="text"
+      inputmode="decimal"
+      value="{{ values.pack_quantity }}"
+      required
+      {% if errors.pack_quantity %}aria-invalid="true" aria-describedby="pack-quantity-error"{% endif %}
+    >
+    {% if errors.pack_quantity %}
+    <p id="pack-quantity-error" class="field-error" role="alert">Error: {{ errors.pack_quantity }}</p>
+    {% endif %}
+  </div>
+  <div class="field">
+    <label for="pack_label">Pack label</label>
+    <input
+      id="pack_label"
+      name="pack_label"
+      type="text"
+      value="{{ values.pack_label }}"
+      maxlength="200"
+      required
+      {% if errors.pack_label %}aria-invalid="true" aria-describedby="pack-label-error"{% endif %}
+    >
+    {% if errors.pack_label %}
+    <p id="pack-label-error" class="field-error" role="alert">Error: {{ errors.pack_label }}</p>
+    {% endif %}
+  </div>
+  <div class="field">
+    <label for="price">Price (£)</label>
+    <input
+      id="price"
+      name="price"
+      type="text"
+      inputmode="decimal"
+      value="{{ values.price }}"
+      required
+      {% if errors.price %}aria-invalid="true" aria-describedby="price-error"{% endif %}
+    >
+    {% if errors.price %}
+    <p id="price-error" class="field-error" role="alert">Error: {{ errors.price }}</p>
+    {% endif %}
+  </div>
+  <button type="submit">Save purchase option</button>
+</form>
+<div id="shop-inline"></div>

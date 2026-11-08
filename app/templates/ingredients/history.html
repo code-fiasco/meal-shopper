@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Price history · Meal Shopper{% endblock %}
+{% block content %}
+<p><a href="/ingredients/{{ ingredient.id }}">{{ ingredient.name }}</a></p>
+<h1>Price history</h1>
+<p>{{ option.shop.name }} · {{ option.pack_label }}</p>
+{% include "partials/price_history.html" %}
+{% endblock %}

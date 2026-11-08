@@ -1,0 +1,19 @@
+<form method="post" action="/shops" hx-post="/shops" hx-target="#shop-inline" hx-swap="innerHTML">
+  <input type="hidden" name="inline" value="yes">
+  <div class="field">
+    <label for="inline-shop-name">New shop name</label>
+    <input
+      id="inline-shop-name"
+      name="name"
+      type="text"
+      value="{{ values.name }}"
+      maxlength="200"
+      required
+      {% if errors.name %}aria-invalid="true" aria-describedby="inline-shop-name-error"{% endif %}
+    >
+    {% if errors.name %}
+    <p id="inline-shop-name-error" class="field-error" role="alert">Error: {{ errors.name }}</p>
+    {% endif %}
+  </div>
+  <button type="submit">Add shop</button>
+</form>

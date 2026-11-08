@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Shops · Meal Shopper{% endblock %}
+{% block content %}
+<p><a href="/ingredients">Ingredients</a></p>
+<div class="page-head">
+  <h1>Shops</h1>
+  <p class="actions"><a class="button" href="/shops/new">New shop</a></p>
+</div>
+<form class="filters" method="get" action="/shops">
+  <div class="field">
+    <label for="status">Show</label>
+    <select id="status" name="status">
+      <option value="active" {% if status == "active" %}selected{% endif %}>Active</option>
+      <option value="archived" {% if status == "archived" %}selected{% endif %}>Archived</option>
+      <option value="all" {% if status == "all" %}selected{% endif %}>All</option>
+    </select>
+  </div>
+  <button type="submit">Show</button>
+</form>
+{% if shops %}
+<ul class="cards">
+  {% for shop in shops %}
+  <li>
+    {% if not shop.is_active %}
+    <p class="status">Archived</p>
+    {% elif status == "all" %}
+    <p class="status">Active</p>
+    {% endif %}
+    <form method="post" action="/shops/{{ shop.id }}">
+      <input type="hidden" name="status" value="{{ status }}">
+      <div class="field">
+        <label for="name-{{ shop.id }}">Name</label>
+        <input
+          id="name-{{ shop.id }}"
+          name="name"
+          type="text"
+          maxlength="200"
+          required
+          value="{% if posted and posted.get(shop.id) %}{{ posted[shop.id].name }}{% else %}{{ shop.name }}{% endif %}"
+          {% if errors and errors.get(shop.id) and errors[shop.id].name %}aria-invalid="true" aria-describedby="name-{{ shop.id }}-error"{% endif %}
+        >
+        {% if errors and errors.get(shop.id) and errors[shop.id].name %}
+        <p id="name-{{ shop.id }}-error" class="field-error" role="alert">Error: {{ errors[shop.id].name }}</p>
+        {% endif %}
+      </div>
+      <div class="field">
+        <label for="notes-{{ shop.id }}">Notes</label>
+        <input
+          id="notes-{{ shop.id }}"
+          name="notes"
+          type="text"
+          maxlength="1000"
+          value="{% if posted and posted.get(shop.id) %}{{ posted[shop.id].notes }}{% else %}{{ shop.notes or '' }}{% endif %}"
+        >
+      </div>
+      <button type="submit">Save</button>
+    </form>
+    {% if shop.is_active %}
+    <details>
+      <summary>Archive</summary>
+      <form method="post" action="/shops/{{ shop.id }}/archive">
+        <p>Archiving keeps this shop on existing purchase options.</p>
+        <button type="submit">Archive shop</button>
+      </form>
+    </details>
+    {% else %}
+    <form method="post" action="/shops/{{ shop.id }}/restore">
+      <button type="submit">Restore shop</button>
+    </form>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No shops in this list.</p>
+{% endif %}
+{% endblock %}
