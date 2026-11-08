@@ -135,6 +135,11 @@ def test_price_change_keeps_history_newest_first(
     body = history.text
     assert body.index("£2.00") < body.index("£1.00")
     assert "1000g" in body
+    assert 'id="price-chart"' in body
+    assert 'src="/static/chart.umd.min.js"' in body
+    assert '"pence": [100, 200]' in body
+    assert "https://" not in body
+    assert "http://" not in body
 
 
 def test_invalid_price_is_shown_beside_the_field(

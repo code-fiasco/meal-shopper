@@ -38,6 +38,11 @@ from app.services.shopping import (
     shopping_page_for,
 )
 from app.services.shops import list_shops
+from app.services.spend import (
+    SpendFormError,
+    record_spend_from_form,
+    transactions_for_list,
+)
 from app.services.units import InvalidQuantityError
 from app.templating import templates
 
@@ -85,6 +90,40 @@ def post_generate(
         return _full(request, session, page)
     _shopping_list, summary = refresh_shopping_list(session, week.id)
     return RedirectResponse(_location(week.week_start_date, summary.label()), 303)
+
+
+@router.post("/shopping/{list_id}/spend")
+async def post_spend(
+    request: Request,
+    list_id: int,
+    session: Session = Depends(get_db),
+) -> Response:
+    shopping_list = _load_list(session, list_id)
+    form = await request.form()
+    values = {str(key): str(value) for key, value in form.multi_items()}
+    try:
+        record_spend_from_form(session, shopping_list, values)
+    except SpendFormError as exc:
+        errors = exc.errors
+    except FieldValidationError as exc:
+        errors = {exc.field: str(exc)}
+    else:
+        return RedirectResponse(
+            _location(shopping_list.week.week_start_date, "Spend recorded."),
+            status_code=303,
+        )
+    page = shopping_page_for(
+        session,
+        shopping_list.week.week_start_date,
+        today=_today(),
+    )
+    return _full(
+        request,
+        session,
+        page,
+        spend_errors=errors,
+        spend_values=values,
+    )
 
 
 @router.post("/shopping/lines/{line_id}")
@@ -214,9 +253,7 @@ def checklist_print(
     session: Session = Depends(get_db),
 ) -> Response:
     shopping_list = _load_list(session, list_id)
-    checklist = checklist_for(
-        shopping_list, order=ORDER_SHOP, show_boxes=boxes != "0"
-    )
+    checklist = checklist_for(shopping_list, order=ORDER_SHOP, show_boxes=boxes != "0")
     return templates.TemplateResponse(
         request,
         "shopping/print.html",
@@ -245,9 +282,7 @@ def post_check(
             "partials/checklist_totals.html",
             {"checklist": checklist},
         )
-    return RedirectResponse(
-        f"/shopping/{line.list_id}/checklist", status_code=303
-    )
+    return RedirectResponse(f"/shopping/{line.list_id}/checklist", status_code=303)
 
 
 def _apply_line(
@@ -407,9 +442,24 @@ def _respond(request: Request, session: Session, page: ShoppingPage) -> Response
     return _full(request, session, page)
 
 
-def _full(request: Request, session: Session, page: ShoppingPage) -> Response:
+def _full(
+    request: Request,
+    session: Session,
+    page: ShoppingPage,
+    *,
+    spend_errors: dict[str, str] | None = None,
+    spend_values: dict[str, str] | None = None,
+) -> Response:
     return templates.TemplateResponse(
-        request, "shopping/index.html", _context(session, page)
+        request,
+        "shopping/index.html",
+        _context(
+            session,
+            page,
+            spend_errors=spend_errors,
+            spend_values=spend_values,
+        ),
+        status_code=200,
     )
 
 
@@ -419,8 +469,28 @@ def _body(request: Request, session: Session, page: ShoppingPage) -> Response:
     )
 
 
-def _context(session: Session, page: ShoppingPage) -> dict[str, object]:
-    return {"active": "shopping", "page": page, "shops": list_shops(session)}
+def _context(
+    session: Session,
+    page: ShoppingPage,
+    *,
+    spend_errors: dict[str, str] | None = None,
+    spend_values: dict[str, str] | None = None,
+) -> dict[str, object]:
+    shopping_list = page.shopping_list
+    transactions = (
+        []
+        if shopping_list is None
+        else transactions_for_list(session, shopping_list.id)
+    )
+    return {
+        "active": "shopping",
+        "page": page,
+        "shops": list_shops(session),
+        "transactions": transactions,
+        "spend_errors": spend_errors or {},
+        "spend_values": spend_values or {},
+        "today": _today(),
+    }
 
 
 def _location(day: date, notice: str | None) -> str:

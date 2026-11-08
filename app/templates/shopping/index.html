@@ -26,6 +26,7 @@
 <p class="actions">
   <a class="button" href="/shopping/{{ page.shopping_list.id }}/checklist">Shopping checklist</a>
   <a class="button button-secondary" href="/shopping/{{ page.shopping_list.id }}/print">Print list</a>
+  <a class="button button-secondary" href="#record-spend">Mark as shopped / record spend</a>
 </p>
 {% endif %}
 <form method="post" action="/shopping/generate">
@@ -36,4 +37,7 @@
   {% endif %}
 </form>
 {% include "partials/shopping_body.html" %}
+{% if page.shopping_list %}
+{% include "partials/spend_form.html" %}
+{% endif %}
 {% endblock %}

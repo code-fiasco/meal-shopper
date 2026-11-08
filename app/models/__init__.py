@@ -12,6 +12,7 @@ from app.models.purchase import (
 )
 from app.models.shop import Shop
 from app.models.shopping import ShoppingList, ShoppingListLine
+from app.models.spend import ShoppingTransaction, ShoppingTransactionLine
 from app.models.stock import PantryStock
 from app.models.unit import Unit, UnitFamily
 
@@ -30,6 +31,8 @@ __all__ = [
     "Shop",
     "ShoppingList",
     "ShoppingListLine",
+    "ShoppingTransaction",
+    "ShoppingTransactionLine",
     "Unit",
     "UnitFamily",
 ]

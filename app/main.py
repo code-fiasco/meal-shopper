@@ -9,10 +9,10 @@ from app.routers import (
     health,
     ingredients,
     meals,
-    pages,
     planner,
     shopping,
     shops,
+    spend,
     stock,
 )
 
@@ -29,13 +29,13 @@ def create_app() -> FastAPI:
     )
     application.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
     application.include_router(health.router)
-    application.include_router(pages.router)
     application.include_router(planner.router)
     application.include_router(ingredients.router)
     application.include_router(meals.router)
     application.include_router(shops.router)
     application.include_router(stock.router)
     application.include_router(shopping.router)
+    application.include_router(spend.router)
     return application
 
 

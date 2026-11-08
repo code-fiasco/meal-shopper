@@ -261,7 +261,7 @@ def test_checklist_tick_persists_and_print_is_plain(
     assert "Remaining" in saved.text
     assert "£0.00" in saved.text
     again = client.get(f"/shopping/{list_id}/checklist")
-    assert 'checked' in again.text
+    assert "checked" in again.text
     assert "✓ Collected" in again.text
     session.rollback()
     stored = session.get(ShoppingListLine, line.id)

@@ -2,5 +2,80 @@
 {% block title %}Spending · Meal Shopper{% endblock %}
 {% block content %}
 <h1>Spending</h1>
-<p>Review estimated shopping cost beside the amount actually paid, with grocery and takeaway totals kept separate.</p>
+<p>Grocery is what you recorded as paid. A week with no recorded shop is unrecorded, not £0. Estimated outlay is the shopping list, shown separately.</p>
+<form class="filters" method="get" action="/spending">
+  <div class="field">
+    <label for="spend-weeks">Number of weeks</label>
+    <select id="spend-weeks" name="weeks">
+      {% for count in week_choices %}
+      <option value="{{ count }}"{% if count == selected_weeks %} selected{% endif %}>{{ count }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="spend-date">Ending in the week of</label>
+    <input id="spend-date" type="date" name="date" value="{{ selected_date.isoformat() }}"{% if date_error %} aria-invalid="true" aria-describedby="spend-date-error"{% endif %}>
+    {% if date_error %}
+    <p class="field-error" id="spend-date-error" role="alert">Error: {{ date_error }}</p>
+    {% endif %}
+  </div>
+  <button type="submit">Show spending</button>
+</form>
+
+<h2>Selected period</h2>
+<p>Recorded grocery: {{ report.grocery_recorded_pence | gbp }} from {{ report.recorded_week_count }} recorded week{% if report.recorded_week_count != 1 %}s{% endif %}.</p>
+{% if report.grocery_average_pence is none %}
+<p>Average grocery: no shopping recorded in this period.</p>
+{% else %}
+<p>Average grocery: {{ report.grocery_average_pence | gbp }} per recorded week. {{ report.unrecorded_week_count }} unrecorded week{% if report.unrecorded_week_count != 1 %}s{% endif %} are left out of this average.</p>
+{% endif %}
+<p>Takeaway: {{ report.takeaway_pence | gbp }}</p>
+<p>Combined recorded grocery and takeaway: {{ report.combined_recorded_pence | gbp }}. Unrecorded grocery is omitted from this total.</p>
+
+<h2>Weekly chart</h2>
+<p>Each week has two bars. The solid stacked bar is labelled Grocery (actual) plus Takeaway. The hatched bar is labelled Estimated outlay and is not part of the amount paid.</p>
+<p>A week with no recorded shop has no grocery segment. That week is unrecorded, not £0.</p>
+<div class="chart-frame">
+  <canvas id="spend-chart" role="img" aria-label="Stacked bars of grocery actually paid and takeaway, with a separate hatched bar for estimated outlay. The table below repeats every figure."></canvas>
+</div>
+<script id="spend-data" type="application/json">{{ chart | tojson }}</script>
+<script src="/static/chart.umd.min.js"></script>
+<script src="/static/spend-chart.js"></script>
+
+<h2>Weekly totals</h2>
+<div class="table-scroll">
+  <table>
+    <caption>Grocery, estimated outlay, and takeaway for each week. Status is written out, not shown by colour alone.</caption>
+    <thead>
+      <tr>
+        <th scope="col">Week</th>
+        <th scope="col">Grocery</th>
+        <th scope="col">Estimated outlay</th>
+        <th scope="col">Takeaway</th>
+        <th scope="col">Combined</th>
+        <th scope="col">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for week in report.weeks %}
+      <tr>
+        <th scope="row">{{ week.label }}</th>
+        <td>{% if week.grocery_pence is none %}Unrecorded{% else %}{{ week.grocery_pence | gbp }}{% endif %}</td>
+        <td>{% if week.estimated_pence is none %}—{% else %}{{ week.estimated_pence | gbp }}{% endif %}</td>
+        <td>{{ week.takeaway_pence | gbp }}</td>
+        <td>
+          {% if week.combined_pence is none %}
+          Incomplete
+          {% elif week.status == "estimated" %}
+          {{ week.combined_pence | gbp }} estimated
+          {% else %}
+          {{ week.combined_pence | gbp }}
+          {% endif %}
+        </td>
+        <td class="status-cell status-{{ week.status }}">{{ week.status_label }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endblock %}

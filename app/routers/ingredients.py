@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.db import get_db
-from app.formatting import format_gbp_input, format_quantity_input
+from app.formatting import format_gbp_input, format_local, format_quantity_input
 from app.models import PurchaseOption, Shop, Unit
 from app.services.ingredients import (
     DuplicateIngredient,
@@ -344,12 +344,21 @@ def option_history(
 ) -> Response:
     ingredient = _require_ingredient(session, ingredient_id)
     option = _require_option(ingredient, option_id)
+    timezone_name = get_settings().app_timezone
+    history = list_price_history(session, option)
+    oldest_first = list(reversed(history))
     context = {
         "active": "ingredients",
         "ingredient": ingredient,
         "option": option,
-        "history": list_price_history(session, option),
-        "timezone_name": get_settings().app_timezone,
+        "history": history,
+        "timezone_name": timezone_name,
+        "chart": {
+            "labels": [
+                format_local(row.recorded_at, timezone_name) for row in oldest_first
+            ],
+            "pence": [row.price_pence for row in oldest_first],
+        },
     }
     template = (
         "partials/price_history.html" if _htmx(request) else "ingredients/history.html"

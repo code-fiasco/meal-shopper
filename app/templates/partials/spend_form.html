@@ -1,0 +1,92 @@
+<section class="spend-record" id="record-spend">
+  <h2>Mark as shopped / record spend</h2>
+  <p>Enter what you actually paid. The estimate stays on the list and is not copied into this total. You can record more than one shop in the week.</p>
+  {% if transactions %}
+  <h3>Recorded shops</h3>
+  <ul>
+    {% for tx in transactions %}
+    <li>
+      <p>{{ tx.spent_on.isoformat() }} · {{ tx.actual_total_pence | gbp }}</p>
+      {% if tx.notes %}<p>{{ tx.notes }}</p>{% endif %}
+      {% if tx.lines %}
+      <ul>
+        {% for item in tx.lines %}
+        <li>
+          {{ item.description }}
+          {% if item.actual_quantity is not none %}
+          {{ item.actual_quantity | qty(item.unit_snapshot if item.unit_snapshot else "units") }}
+          {% endif %}
+          {% if item.actual_price_pence is not none %}
+          {{ item.actual_price_pence | gbp }}
+          {% endif %}
+          {% if item.notes %}{{ item.notes }}{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <form method="post" action="/shopping/{{ page.shopping_list.id }}/spend">
+    <div class="field">
+      <label for="spend-total">Total actually paid (£)</label>
+      <input id="spend-total" name="total" inputmode="decimal" autocomplete="off" value="{{ spend_values.get('total', '') }}"{% if spend_errors.total %} aria-invalid="true" aria-describedby="spend-total-error"{% endif %}>
+      {% if spend_errors.total %}
+      <p class="field-error" id="spend-total-error" role="alert">Error: {{ spend_errors.total }}</p>
+      {% endif %}
+    </div>
+    <div class="field">
+      <label for="spent-on">Date</label>
+      {% set spent = spend_values.get('spent_on', '') %}
+      <input id="spent-on" type="date" name="spent_on" value="{{ spent if spent else today.isoformat() }}"{% if spend_errors.spent_on %} aria-invalid="true" aria-describedby="spent-on-error"{% endif %}>
+      {% if spend_errors.spent_on %}
+      <p class="field-error" id="spent-on-error" role="alert">Error: {{ spend_errors.spent_on }}</p>
+      {% endif %}
+    </div>
+    <div class="field">
+      <label for="spend-notes">Notes</label>
+      <textarea id="spend-notes" name="notes"{% if spend_errors.notes %} aria-invalid="true" aria-describedby="spend-notes-error"{% endif %}>{{ spend_values.get('notes', '') }}</textarea>
+      {% if spend_errors.notes %}
+      <p class="field-error" id="spend-notes-error" role="alert">Error: {{ spend_errors.notes }}</p>
+      {% endif %}
+    </div>
+    <h3>Line details, optional</h3>
+    <p>Leave a line blank to record only the shop total. An amount here does not change the estimate or the total above.</p>
+    {% for item in page.generated + page.manual %}
+    <fieldset class="spend-line">
+      <legend>{{ item.line.description }}</legend>
+      {% if item.line.source == "manual" %}
+        {% if item.line.manual_price_pence is not none %}
+        <p>Estimate {{ item.line.manual_price_pence | gbp }}</p>
+        {% else %}
+        <p>No estimate</p>
+        {% endif %}
+      {% elif item.line.estimated_price_pence is not none %}
+      <p>Estimate {{ item.line.estimated_price_pence | gbp }}</p>
+      {% else %}
+      <p>No estimate</p>
+      {% endif %}
+      <div class="field">
+        <label for="qty-{{ item.line.id }}">Actual quantity{% if item.line.unit_snapshot %} ({{ item.line.unit_snapshot }}){% endif %}</label>
+        <input id="qty-{{ item.line.id }}" name="qty-{{ item.line.id }}" inputmode="decimal" value="{{ spend_values.get('qty-' ~ item.line.id, '') }}"{% if spend_errors.get('qty-' ~ item.line.id) %} aria-invalid="true" aria-describedby="qty-{{ item.line.id }}-error"{% endif %}>
+        {% if spend_errors.get('qty-' ~ item.line.id) %}
+        <p class="field-error" id="qty-{{ item.line.id }}-error" role="alert">Error: {{ spend_errors.get('qty-' ~ item.line.id) }}</p>
+        {% endif %}
+      </div>
+      <div class="field">
+        <label for="spend-price-{{ item.line.id }}">Actual price (£)</label>
+        <input id="spend-price-{{ item.line.id }}" name="price-{{ item.line.id }}" inputmode="decimal" value="{{ spend_values.get('price-' ~ item.line.id, '') }}"{% if spend_errors.get('price-' ~ item.line.id) %} aria-invalid="true" aria-describedby="spend-price-{{ item.line.id }}-error"{% endif %}>
+        {% if spend_errors.get('price-' ~ item.line.id) %}
+        <p class="field-error" id="spend-price-{{ item.line.id }}-error" role="alert">Error: {{ spend_errors.get('price-' ~ item.line.id) }}</p>
+        {% endif %}
+      </div>
+      <div class="field">
+        <label for="line-notes-{{ item.line.id }}">Line notes</label>
+        <input id="line-notes-{{ item.line.id }}" name="line-notes-{{ item.line.id }}" value="{{ spend_values.get('line-notes-' ~ item.line.id, '') }}">
+      </div>
+    </fieldset>
+    {% endfor %}
+    <button type="submit">Mark as shopped / record spend</button>
+  </form>
+</section>

@@ -5,4 +5,14 @@
 <h1>Price history</h1>
 <p>{{ option.shop.name }} · {{ option.pack_label }}</p>
 {% include "partials/price_history.html" %}
+{% if history %}
+<h2>Price chart</h2>
+<p>Each point is a saved price snapshot, oldest to newest.</p>
+<div class="chart-frame">
+  <canvas id="price-chart" role="img" aria-label="Line chart of saved pack prices. The table above lists the same prices."></canvas>
+</div>
+<script id="price-data" type="application/json">{{ chart | tojson }}</script>
+<script src="/static/chart.umd.min.js"></script>
+<script src="/static/price-chart.js"></script>
+{% endif %}
 {% endblock %}

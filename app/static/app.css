@@ -586,3 +586,40 @@ body.print-list {
     text-decoration: none;
   }
 }
+
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.chart-frame {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  height: 18rem;
+  margin: 0.75rem 0 1.25rem;
+}
+
+.chart-frame canvas {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.status-estimated {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 3px,
+    rgba(20, 53, 42, 0.22) 3px,
+    rgba(20, 53, 42, 0.22) 5px
+  );
+}
+
+.spend-line {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  background: var(--paper);
+}

@@ -55,12 +55,7 @@
       </form>
       {% endif %}
       <a href="/ingredients/{{ ingredient.id }}/options/{{ option.id }}/edit">Edit</a>
-      <a
-        href="/ingredients/{{ ingredient.id }}/options/{{ option.id }}/history"
-        hx-get="/ingredients/{{ ingredient.id }}/options/{{ option.id }}/history"
-        hx-target="#history-{{ option.id }}"
-        hx-swap="innerHTML"
-      >Price history</a>
+      <a href="/ingredients/{{ ingredient.id }}/options/{{ option.id }}/history">Price history</a>
       {% if option.is_active %}
       <details>
         <summary>Archive</summary>
@@ -75,7 +70,6 @@
       </form>
       {% endif %}
     </p>
-    <div id="history-{{ option.id }}"></div>
   </li>
   {% endfor %}
 </ul>

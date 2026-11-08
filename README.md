@@ -12,6 +12,7 @@ Product behaviour is specified in [docs/spec.md](docs/spec.md) (SRS v1.0).
 - Alembic
 - SQLite
 - Jinja2 templates and HTMX 2.0.4 (vendored at `app/static/htmx.min.js`, no CDN)
+- Chart.js 4.4.6 (vendored at `app/static/chart.umd.min.js`, no CDN)
 - pytest
 - Docker on a Linux server
 
@@ -23,7 +24,7 @@ Ingredients and shops are usable:
 - Search the ingredient list and filter active or archived records
 - Archive an ingredient instead of deleting it
 - Record several purchase options per ingredient (shop, pack quantity, pack label, price) and compare the price per canonical unit
-- Keep price history when a pack price or quantity changes
+- Keep price history when a pack price or quantity changes, and chart those saved prices
 - Add, rename, and archive shops
 - Create and edit two-portion meals, including an inline new ingredient that stays on the recipe
 - Estimate a meal's ingredient cost, and say which ingredients have no price
@@ -33,8 +34,9 @@ Ingredients and shops are usable:
 - Generate a week's shopping list from planned meals, deduct pantry stock once, and round up to packs
 - Adjust that list in the browser: change the pack, quantity, price, or stock, and add items that are not on a recipe
 - Tick the phone checklist, and print the list as a plain A4 page
+- Record what a shop actually cost, without copying the estimate, and chart grocery, takeaway, and the estimate separately
 
-Spending is not built yet. The container still serves navigation and a health check, and the SQLite database lives on a host mount.
+The container serves the app and a health check, and the SQLite database lives on a host mount.
 
 ## Configuration
 
@@ -99,7 +101,7 @@ Confirm the file is still there and still has the migration stamp:
 test -f data/app.db && python -c "import sqlite3; print(sqlite3.connect('data/app.db').execute('select version_num from alembic_version').fetchone())"
 ```
 
-A surviving database prints `('0006_shopping',)`.
+A surviving database prints `('0007_spend',)`.
 
 To back up, stop the container and copy `data/app.db`. Copy that file back to restore. Start the container only after the copy finishes.
 
