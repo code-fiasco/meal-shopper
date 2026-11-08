@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Meal Shopper{% endblock %}</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="/">Meal Shopper</a>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="/" {% if active == "planner" %}aria-current="page"{% endif %}>Planner</a></li>
+        <li><a href="/meals" {% if active == "meals" %}aria-current="page"{% endif %}>Meals</a></li>
+        <li><a href="/ingredients" {% if active == "ingredients" %}aria-current="page"{% endif %}>Ingredients</a></li>
+        <li><a href="/shopping" {% if active == "shopping" %}aria-current="page"{% endif %}>Shopping</a></li>
+        <li><a href="/stock" {% if active == "stock" %}aria-current="page"{% endif %}>Stock</a></li>
+        <li><a href="/spending" {% if active == "spending" %}aria-current="page"{% endif %}>Spending</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main id="content">
+    {% block content %}{% endblock %}
+  </main>
+  <script src="/static/htmx.min.js"></script>
+</body>
+</html>

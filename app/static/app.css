@@ -1,0 +1,129 @@
+:root {
+  color-scheme: light;
+  --ink: #1c1917;
+  --cream: #f6f3ee;
+  --paper: #fffdfb;
+  --line: #d6d3d1;
+  --header: #14352a;
+  --header-text: #f8f5f0;
+  --focus-ring: #111111;
+  --focus-halo: #e8a317;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px var(--focus-halo);
+}
+
+.skip {
+  position: absolute;
+  left: 0.75rem;
+  top: 0.75rem;
+  z-index: 2;
+  transform: translateY(-200%);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 0.5rem 0.75rem;
+}
+
+.skip:focus {
+  transform: none;
+}
+
+.site-header {
+  background: var(--header);
+  color: var(--header-text);
+  padding: 0.75rem 1rem 0.25rem;
+}
+
+.brand {
+  display: inline-block;
+  margin: 0.25rem 0 0.5rem;
+  color: var(--header-text);
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.brand:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.4rem 0.75rem;
+  color: var(--header-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+nav a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+nav a[aria-current="page"] {
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+p {
+  margin: 0;
+  max-width: 40rem;
+  font-size: 1.0625rem;
+}
+
+@media (max-width: 36rem) {
+  .site-header {
+    padding-inline: 0.75rem;
+  }
+
+  nav a {
+    padding-inline: 0.6rem;
+  }
+}

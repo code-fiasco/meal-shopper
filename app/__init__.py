@@ -1,0 +1,1 @@
+"""Meal Shopper application package."""

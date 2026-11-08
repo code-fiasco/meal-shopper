@@ -1,0 +1,28 @@
+services:
+  web:
+    build: .
+    image: meal-shopper:local
+    ports:
+      - "${APP_PORT:-8000}:${APP_PORT:-8000}"
+    environment:
+      APP_PORT: ${APP_PORT:-8000}
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////data/app.db}
+      APP_TIMEZONE: ${APP_TIMEZONE:-Europe/London}
+      TZ: ${TZ:-Europe/London}
+      APP_ENV: ${APP_ENV:-production}
+    volumes:
+      # Host directory survives container removal. The database file is /data/app.db.
+      - ./data:/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/health' % os.environ.get('APP_PORT', '8000'))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
