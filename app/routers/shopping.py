@@ -21,13 +21,17 @@ from app.services.parsing import (
 )
 from app.services.planner import get_week, local_today, week_start_for
 from app.services.shopping import (
+    ORDER_NAME,
+    ORDER_SHOP,
     ShoppingPage,
     add_manual_line,
+    checklist_for,
     choose_purchase_option,
     cover_requirement_with_stock,
     refresh_shopping_list,
     remove_generated_line,
     restore_removed_line,
+    set_line_checked,
     set_line_price,
     set_pack_count_override,
     set_quantity_override,
@@ -186,6 +190,66 @@ def post_manual(
     return RedirectResponse(_location(anchor, "Item added."), status_code=303)
 
 
+@router.get("/shopping/{list_id}/checklist")
+def checklist_page(
+    request: Request,
+    list_id: int,
+    order: str = ORDER_SHOP,
+    session: Session = Depends(get_db),
+) -> Response:
+    shopping_list = _load_list(session, list_id)
+    checklist = checklist_for(shopping_list, order=_known_order(order))
+    return templates.TemplateResponse(
+        request,
+        "shopping/checklist.html",
+        {"active": "shopping", "checklist": checklist},
+    )
+
+
+@router.get("/shopping/{list_id}/print")
+def checklist_print(
+    request: Request,
+    list_id: int,
+    boxes: str = "1",
+    session: Session = Depends(get_db),
+) -> Response:
+    shopping_list = _load_list(session, list_id)
+    checklist = checklist_for(
+        shopping_list, order=ORDER_SHOP, show_boxes=boxes != "0"
+    )
+    return templates.TemplateResponse(
+        request,
+        "shopping/print.html",
+        {"checklist": checklist},
+    )
+
+
+@router.post("/shopping/lines/{line_id}/check")
+def post_check(
+    request: Request,
+    line_id: int,
+    checked: str = Form(""),
+    session: Session = Depends(get_db),
+) -> Response:
+    line = _load_line(session, line_id)
+    try:
+        set_line_checked(line, _is_checked(checked))
+    except FieldValidationError as exc:
+        if _htmx(request):
+            return Response(f"Error: {exc}", status_code=422)
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    checklist = checklist_for(line.shopping_list, order=ORDER_SHOP)
+    if _htmx(request):
+        return templates.TemplateResponse(
+            request,
+            "partials/checklist_totals.html",
+            {"checklist": checklist},
+        )
+    return RedirectResponse(
+        f"/shopping/{line.list_id}/checklist", status_code=303
+    )
+
+
 def _apply_line(
     session: Session,
     line: ShoppingListLine,
@@ -292,6 +356,30 @@ def _shop_name(session: Session, raw: str) -> str | None:
     if shop is None or not shop.is_active:
         raise FieldValidationError("shop_id", "Choose a shop.")
     return shop.name
+
+
+def _load_list(session: Session, list_id: int) -> ShoppingList:
+    shopping_list = session.scalar(
+        select(ShoppingList)
+        .where(ShoppingList.id == list_id)
+        .options(
+            selectinload(ShoppingList.lines),
+            selectinload(ShoppingList.week),
+        )
+    )
+    if shopping_list is None:
+        raise HTTPException(status_code=404)
+    return shopping_list
+
+
+def _known_order(raw: str) -> str:
+    if raw == ORDER_NAME:
+        return ORDER_NAME
+    return ORDER_SHOP
+
+
+def _is_checked(raw: str) -> bool:
+    return raw.strip().lower() in {"1", "true", "on", "yes"}
 
 
 def _load_line(session: Session, line_id: int) -> ShoppingListLine:

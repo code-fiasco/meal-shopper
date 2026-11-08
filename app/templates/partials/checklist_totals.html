@@ -1,0 +1,10 @@
+<section id="checklist-totals" class="shop-totals" aria-live="polite">
+  <h2>Estimated total</h2>
+  <p>{{ checklist.totals.estimated_pence | gbp }}</p>
+  <h2>Remaining</h2>
+  <p>{{ checklist.totals.remaining_pence | gbp }}</p>
+  {% if not checklist.totals.is_complete %}
+  <p class="status">incomplete: missing price for {{ checklist.totals.missing_ingredients | join(", ") }}</p>
+  {% endif %}
+  <p>Remaining is the estimated cost of items still to buy.</p>
+</section>

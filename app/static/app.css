@@ -403,6 +403,16 @@ body.print-plan {
   main {
     padding-inline: 0.75rem;
   }
+
+  .week-grid {
+    gap: 0.85rem;
+  }
+
+  .day-card .actions button,
+  .slot .actions button {
+    width: 100%;
+    min-height: 48px;
+  }
 }
 
 .shop-line {
@@ -442,6 +452,107 @@ body.print-plan {
   margin-top: 1.5rem;
   padding-top: 1rem;
   border-top: 2px solid var(--header);
+}
+
+.checklist {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-height: 48px;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.check-row input[type="checkbox"] {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  margin: 0;
+  flex: 0 0 48px;
+  accent-color: var(--header);
+}
+
+.check-main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.check-name {
+  font-weight: 700;
+}
+
+.check-row:has(input:checked) .check-name {
+  text-decoration: line-through;
+}
+
+.check-state {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-weight: 700;
+}
+
+.check-row .when-collected {
+  display: none;
+}
+
+.check-row:has(input:checked) .when-open {
+  display: none;
+}
+
+.check-row:has(input:checked) .when-collected {
+  display: inline;
+}
+
+.check-bits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.75rem;
+  margin-top: 0.15rem;
+}
+
+.checklist.show-unchecked .check-row:has(input:checked) {
+  display: none;
+}
+
+@page shopping {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+body.print-list {
+  page: shopping;
+  background: #fff;
+  color: #000;
+  font-family: "Courier New", Courier, monospace;
+}
+
+.print-items {
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.print-items li {
+  margin: 0 0 0.65rem;
+}
+
+.print-name {
+  font-weight: 700;
+}
+
+.print-box {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.45em;
+  border: 1px solid #000;
+  vertical-align: text-bottom;
 }
 
 @media print {

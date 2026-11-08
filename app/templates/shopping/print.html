@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shopping list {{ checklist.label }} · Meal Shopper</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="print-list">
+  <main class="print-sheet">
+    <p class="no-print actions">
+      <a href="/shopping/{{ checklist.list_id }}/checklist">Back to checklist</a>
+      {% if checklist.show_boxes %}
+      <a href="/shopping/{{ checklist.list_id }}/print?boxes=0">Hide checkboxes</a>
+      {% else %}
+      <a href="/shopping/{{ checklist.list_id }}/print">Show checkboxes</a>
+      {% endif %}
+    </p>
+    <h1>Shopping list</h1>
+    <p>{{ checklist.label }}</p>
+    <ul class="print-items">
+      {% for item in checklist.items %}
+      <li>
+        {% if checklist.show_boxes %}<span class="print-box" aria-hidden="true"></span>{% endif %}
+        <span class="print-name">{{ item.line.description }}</span>
+        <span class="check-bits">
+          {% include "partials/checklist_facts.html" %}
+        </span>
+      </li>
+      {% else %}
+      <li>Nothing to buy.</li>
+      {% endfor %}
+    </ul>
+    <p>Estimated total {{ checklist.totals.estimated_pence | gbp }}</p>
+  </main>
+</body>
+</html>

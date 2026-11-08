@@ -15,6 +15,8 @@ from app.services.planner import assign_blank, assign_meal, assign_takeaway, get
 from app.services.purchase_options import change_purchase_option, create_purchase_option
 from app.services.shopping import (
     add_manual_line,
+    checklist_for,
+    checklist_lines,
     choose_purchase_option,
     cover_requirement_with_stock,
     generate_shopping_list,
@@ -23,6 +25,7 @@ from app.services.shopping import (
     refresh_shopping_list,
     remove_generated_line,
     restore_removed_line,
+    set_line_checked,
     set_line_price,
     set_pack_count_override,
     set_quantity_override,
@@ -782,6 +785,72 @@ def test_covering_a_requirement_does_not_reduce_larger_stock(session: Session) -
     )
     cover_requirement_with_stock(session, covered)
     assert get_stock_map(session)[beef.id] == Decimal("500")
+
+
+def test_checklist_orders_shops_and_keeps_a_tick(session: Session) -> None:
+    grams = _unit(session, "g")
+    beef = create_ingredient(session, name="Minced beef", canonical_unit=grams)
+    beef = beef.ingredient
+    onion = create_ingredient(session, name="Onion", canonical_unit=grams).ingredient
+    create_purchase_option(
+        session,
+        ingredient=beef,
+        shop=_shop(session, "Butcher"),
+        pack_quantity=Decimal("500"),
+        pack_label="500g pack",
+        price_pence=350,
+    )
+    create_purchase_option(
+        session,
+        ingredient=onion,
+        shop=_shop(session, "Market"),
+        pack_quantity=Decimal("1"),
+        pack_label="each",
+        price_pence=40,
+    )
+    meal = _meal(
+        session,
+        "Ragu",
+        [
+            RawLine(str(beef.id), "200", str(grams.id), ""),
+            RawLine(str(onion.id), "1", str(grams.id), ""),
+        ],
+    )
+    week = _plan(session, [(MONDAY, "lunch", meal.id)])
+    shopping_list = generate_shopping_list(session, week.id)
+    add_manual_line(session, shopping_list, description="Apples")
+    by_shop = checklist_lines(list(shopping_list.lines), order="shop")
+    assert [item.line.description for item in by_shop] == [
+        "Minced beef",
+        "Onion",
+        "Apples",
+    ]
+    by_name = checklist_lines(list(shopping_list.lines), order="name")
+    assert [item.line.description for item in by_name] == [
+        "Apples",
+        "Minced beef",
+        "Onion",
+    ]
+    beef_line = _line(shopping_list, "Minced beef")
+    totals = checklist_for(shopping_list).totals
+    assert totals.estimated_pence == totals.remaining_pence
+    set_line_checked(beef_line, True)
+    ticked = checklist_for(shopping_list).totals
+    assert ticked.estimated_pence == totals.estimated_pence
+    beef_price = beef_line.estimated_price_pence or 0
+    assert ticked.remaining_pence == totals.remaining_pence - beef_price
+    assert beef_line.checked is True
+    set_line_checked(beef_line, False)
+    assert beef_line.checked is False
+    with pytest.raises(FieldValidationError, match="collected"):
+        set_line_checked(beef_line, 1)  # type: ignore[arg-type]
+    remove_generated_line(beef_line)
+    with pytest.raises(FieldValidationError, match="removed"):
+        set_line_checked(beef_line, True)
+    visible = checklist_lines(shopping_list.lines, order="shop")
+    assert [item.line.description for item in visible] == ["Onion", "Apples"]
+    with pytest.raises(FieldValidationError, match="A-Z"):
+        checklist_lines(shopping_list.lines, order="aisle")
 
 
 def test_generate_rejects_an_unknown_week(session: Session) -> None:

@@ -234,6 +234,61 @@ def test_invalid_price_stays_on_the_page(client: TestClient, session: Session) -
     assert "Buy 600g" in rejected.text
 
 
+def test_checklist_tick_persists_and_print_is_plain(
+    client: TestClient, session: Session
+) -> None:
+    _beef_week(session)
+    page = _generate(client)
+    list_id = page.split("/shopping/")[1].split("/checklist")[0]
+    checklist = client.get(f"/shopping/{list_id}/checklist")
+    assert checklist.status_code == 200
+    assert "Minced beef" in checklist.text
+    assert "To buy" in checklist.text
+    assert "600g" in checklist.text
+    assert "2 packs" in checklist.text
+    assert "Butcher" in checklist.text
+    assert "Estimated total" in checklist.text
+    assert "Remaining" in checklist.text
+    assert "£7.00" in checklist.text
+    line = _line(session)
+    saved = client.post(
+        f"/shopping/lines/{line.id}/check",
+        data={"checked": "1"},
+        headers={"HX-Request": "true"},
+    )
+    assert saved.status_code == 200
+    assert "<html" not in saved.text.lower()
+    assert "Remaining" in saved.text
+    assert "£0.00" in saved.text
+    again = client.get(f"/shopping/{list_id}/checklist")
+    assert 'checked' in again.text
+    assert "✓ Collected" in again.text
+    session.rollback()
+    stored = session.get(ShoppingListLine, line.id)
+    assert stored is not None
+    assert stored.checked is True
+    cleared = client.post(
+        f"/shopping/lines/{line.id}/check",
+        data={"checked": "0"},
+        follow_redirects=True,
+    )
+    assert "To buy" in cleared.text
+    session.rollback()
+    stored = session.get(ShoppingListLine, line.id)
+    assert stored is not None
+    assert stored.checked is False
+    printed = client.get(f"/shopping/{list_id}/print")
+    assert printed.status_code == 200
+    assert "Minced beef" in printed.text
+    assert "2 packs" in printed.text
+    assert "£7.00" in printed.text
+    assert "print-box" in printed.text
+    assert "<nav" not in printed.text
+    assert "Skip to content" not in printed.text
+    hidden = client.get(f"/shopping/{list_id}/print?boxes=0")
+    assert "print-box" not in hidden.text
+
+
 def test_generate_needs_a_planned_week(client: TestClient, session: Session) -> None:
     rejected = client.post(
         "/shopping/generate",

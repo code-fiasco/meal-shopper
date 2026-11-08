@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Checklist · Meal Shopper{% endblock %}
+{% block content %}
+<h1>Shopping checklist</h1>
+<p class="week-range">{{ checklist.label }}</p>
+<p class="actions">
+  <a class="button button-secondary" href="/shopping?date={{ checklist.start.isoformat() }}">Back to list</a>
+</p>
+<p class="actions" id="checklist-tools">
+  <a class="button{% if checklist.order == 'name' %} button-secondary{% endif %}" href="/shopping/{{ checklist.list_id }}/checklist?order=shop" data-sort="shop"{% if checklist.order != 'name' %} aria-current="page"{% endif %}>By shop</a>
+  <a class="button{% if checklist.order != 'name' %} button-secondary{% endif %}" href="/shopping/{{ checklist.list_id }}/checklist?order=name" data-sort="name"{% if checklist.order == 'name' %} aria-current="page"{% endif %}>A-Z</a>
+  <button type="button" class="button-secondary" id="unchecked-only" aria-pressed="false">Show unchecked only</button>
+  <a class="button button-secondary" href="/shopping/{{ checklist.list_id }}/print">Print list</a>
+</p>
+{% include "partials/checklist_totals.html" %}
+<ul class="checklist" id="checklist" data-list-id="{{ checklist.list_id }}">
+  {% for item in checklist.items %}
+  <li>
+    {% include "partials/checklist_row.html" %}
+  </li>
+  {% else %}
+  <li><p>Nothing to buy.</p></li>
+  {% endfor %}
+</ul>
+<script>
+(function () {
+  var list = document.getElementById("checklist");
+  var toggle = document.getElementById("unchecked-only");
+  if (!list || !toggle) return;
+  var key = "meal-shopper-checklist-" + list.dataset.listId;
+  var stored = {};
+  try { stored = JSON.parse(localStorage.getItem(key) || "{}"); } catch (error) { stored = {}; }
+  var params = new URLSearchParams(window.location.search);
+  if (!params.has("order") && (stored.order === "shop" || stored.order === "name")) {
+    params.set("order", stored.order);
+    window.location.replace(window.location.pathname + "?" + params.toString());
+    return;
+  }
+  if (stored.uncheckedOnly) {
+    list.classList.add("show-unchecked");
+    toggle.setAttribute("aria-pressed", "true");
+  }
+  toggle.addEventListener("click", function () {
+    var on = list.classList.toggle("show-unchecked");
+    toggle.setAttribute("aria-pressed", on ? "true" : "false");
+    var next = {};
+    try { next = JSON.parse(localStorage.getItem(key) || "{}"); } catch (error) { next = {}; }
+    next.uncheckedOnly = on;
+    localStorage.setItem(key, JSON.stringify(next));
+  });
+  document.querySelectorAll("[data-sort]").forEach(function (link) {
+    link.addEventListener("click", function () {
+      var next = {};
+      try { next = JSON.parse(localStorage.getItem(key) || "{}"); } catch (error) { next = {}; }
+      next.order = link.getAttribute("data-sort");
+      localStorage.setItem(key, JSON.stringify(next));
+    });
+  });
+})();
+</script>
+{% endblock %}

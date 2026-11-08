@@ -205,6 +205,132 @@ def set_line_price(line: ShoppingListLine, price_pence: int) -> None:
     _recompute_packs(line)
 
 
+ORDER_SHOP = "shop"
+ORDER_NAME = "name"
+
+
+@dataclass(frozen=True)
+class ChecklistTotals:
+    """Estimated outlay, and the share of it that is still unticked."""
+
+    estimated_pence: int
+    remaining_pence: int
+    is_complete: bool
+    missing_ingredients: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ChecklistItem:
+    """One visible checklist row and the price it contributes."""
+
+    line: ShoppingListLine
+    price_pence: int | None
+    off_plan: bool
+
+
+@dataclass
+class ChecklistPage:
+    """Phone checklist or print view for one saved list."""
+
+    list_id: int
+    label: str
+    start: date
+    items: list[ChecklistItem]
+    totals: ChecklistTotals
+    order: str
+    show_boxes: bool
+
+
+def set_line_checked(line: ShoppingListLine, checked: bool) -> None:
+    """Mark a row collected. The choice stays on this list."""
+    if not isinstance(checked, bool):
+        raise FieldValidationError("checked", "Choose collected or still to buy.")
+    if line.removed:
+        raise FieldValidationError("checked", "A removed item is not on the checklist.")
+    line.checked = checked
+
+
+def checklist_for(
+    shopping_list: ShoppingList, *, order: str = ORDER_SHOP, show_boxes: bool = True
+) -> ChecklistPage:
+    """Rows to buy, in shop order or A-Z, with estimated and remaining totals."""
+    chosen = _checklist_order(order)
+    visible = checklist_lines(list(shopping_list.lines), order=chosen)
+    return ChecklistPage(
+        list_id=shopping_list.id,
+        label=format_week_range(shopping_list.week.week_start_date),
+        start=shopping_list.week.week_start_date,
+        items=visible,
+        totals=checklist_totals(list(shopping_list.lines)),
+        order=chosen,
+        show_boxes=show_boxes,
+    )
+
+
+def checklist_lines(
+    lines: list[ShoppingListLine], *, order: str
+) -> list[ChecklistItem]:
+    """Visible rows. Shop order uses the shop only when one is set."""
+    chosen = _checklist_order(order)
+    visible = [line for line in lines if not line.removed]
+    if chosen == ORDER_NAME:
+        ordered = sorted(visible, key=_name_key)
+    else:
+        with_shop = [line for line in visible if line.shop_name]
+        without_shop = [line for line in visible if not line.shop_name]
+        with_shop.sort(key=_shop_key)
+        without_shop.sort(key=_name_key)
+        ordered = [*with_shop, *without_shop]
+    return [_checklist_item(line) for line in ordered]
+
+
+def checklist_totals(lines: list[ShoppingListLine]) -> ChecklistTotals:
+    """Sum priced rows. Remaining leaves out anything already ticked."""
+    estimated = 0
+    remaining = 0
+    missing: list[str] = []
+    for line in lines:
+        if line.removed:
+            continue
+        price = _outlay_pence(line)
+        if price is not None:
+            estimated += price
+            if not line.checked:
+                remaining += price
+        if _missing_price(line):
+            missing.append(line.description)
+    missing.sort(key=str.casefold)
+    return ChecklistTotals(
+        estimated_pence=estimated,
+        remaining_pence=remaining,
+        is_complete=not missing,
+        missing_ingredients=tuple(missing),
+    )
+
+
+def _checklist_item(line: ShoppingListLine) -> ChecklistItem:
+    return ChecklistItem(
+        line=line,
+        price_pence=_outlay_pence(line),
+        off_plan=kept_without_requirement(line),
+    )
+
+
+def _checklist_order(order: str) -> str:
+    if order in {ORDER_SHOP, ORDER_NAME}:
+        return order
+    raise FieldValidationError("order", "Sort by shop or A-Z.")
+
+
+def _name_key(line: ShoppingListLine) -> tuple[str, int]:
+    return (line.description.casefold(), line.id)
+
+
+def _shop_key(line: ShoppingListLine) -> tuple[str, str, int]:
+    shop = line.shop_name or ""
+    return (shop.casefold(), line.description.casefold(), line.id)
+
+
 def shopping_totals(shopping_list: ShoppingList) -> ShoppingTotals:
     """Sum pack outlay and recipe consumption without mixing the two."""
     outlay = 0

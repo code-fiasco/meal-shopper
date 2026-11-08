@@ -1,0 +1,22 @@
+<label class="check-row">
+  <input
+    type="checkbox"
+    name="checked"
+    value="1"
+    hx-post="/shopping/lines/{{ item.line.id }}/check"
+    hx-trigger="change"
+    hx-target="#checklist-totals"
+    hx-swap="outerHTML"
+    hx-on::response-error="this.checked = !this.checked"
+    {% if item.line.checked %}checked{% endif %}
+    aria-describedby="check-{{ item.line.id }}-detail"
+  >
+  <span class="check-main">
+    <span class="check-name">{{ item.line.description }}</span>
+    <span class="check-state when-open">To buy</span>
+    <span class="check-state when-collected">✓ Collected</span>
+    <span class="check-bits" id="check-{{ item.line.id }}-detail">
+      {% include "partials/checklist_facts.html" %}
+    </span>
+  </span>
+</label>

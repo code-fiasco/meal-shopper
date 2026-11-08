@@ -32,6 +32,7 @@ Ingredients and shops are usable:
 - Record pantry stock in each ingredient's canonical unit, and adjust it by hand
 - Generate a week's shopping list from planned meals, deduct pantry stock once, and round up to packs
 - Adjust that list in the browser: change the pack, quantity, price, or stock, and add items that are not on a recipe
+- Tick the phone checklist, and print the list as a plain A4 page
 
 Spending is not built yet. The container still serves navigation and a health check, and the SQLite database lives on a host mount.
 

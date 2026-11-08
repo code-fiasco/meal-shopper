@@ -1,0 +1,26 @@
+{% if item.line.source == "manual" %}
+  {% if item.line.unit_snapshot %}
+  <span>{{ item.line.required_quantity | qty(item.line.unit_snapshot) }}</span>
+  {% endif %}
+{% else %}
+  {% if item.line.unit_snapshot %}
+  <span>{% if item.line.quantity_overridden %}{{ item.line.quantity_override | qty(item.line.unit_snapshot) }}{% else %}{{ item.line.net_quantity | qty(item.line.unit_snapshot) }}{% endif %}</span>
+  {% endif %}
+  {% if item.line.pack_count %}
+  <span>{{ item.line.pack_count }} {% if item.line.pack_count == 1 %}pack{% else %}packs{% endif %}</span>
+  {% endif %}
+  {% if item.line.pack_label %}
+  <span>{{ item.line.pack_label }}</span>
+  {% endif %}
+{% endif %}
+{% if item.line.shop_name %}
+<span>{{ item.line.shop_name }}</span>
+{% endif %}
+{% if item.price_pence is not none %}
+<span>{{ item.price_pence | gbp }}</span>
+{% else %}
+<span>No price</span>
+{% endif %}
+{% if item.off_plan %}
+<span>No longer on the plan</span>
+{% endif %}

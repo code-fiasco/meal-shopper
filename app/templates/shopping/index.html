@@ -22,6 +22,12 @@
   </div>
   <button type="submit">Show week</button>
 </form>
+{% if page.shopping_list %}
+<p class="actions">
+  <a class="button" href="/shopping/{{ page.shopping_list.id }}/checklist">Shopping checklist</a>
+  <a class="button button-secondary" href="/shopping/{{ page.shopping_list.id }}/print">Print list</a>
+</p>
+{% endif %}
 <form method="post" action="/shopping/generate">
   <input type="hidden" name="date" value="{{ page.start.isoformat() }}">
   <button type="submit">{% if page.shopping_list %}Refresh list{% else %}Generate list{% endif %}</button>
