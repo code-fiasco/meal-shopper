@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Planner · Meal Shopper{% endblock %}
+{% block main_class %}wide{% endblock %}
+{% block content %}
+<h1>Planner</h1>
+<p>Plan lunch and dinner for each day. Every meal is for two portions. Estimated meal cost uses ingredient prices. Takeaway prices are kept separate.</p>
+<p class="week-range">{{ week.label }}</p>
+{% if week.is_current %}
+<p>This week</p>
+{% endif %}
+<p class="actions no-print">
+  <a class="button button-secondary" href="/planner?date={{ week.previous.isoformat() }}">Previous week</a>
+  <a class="button button-secondary" href="/planner?date={{ week.following.isoformat() }}">Next week</a>
+  <a class="button button-secondary" href="/planner">This week</a>
+  <a class="button" href="/planner/print?date={{ week.start.isoformat() }}">Print view</a>
+</p>
+<form class="filters no-print" method="get" action="/planner">
+  <div class="field">
+    <label for="jump-date">Jump to date</label>
+    <input id="jump-date" type="date" name="date" value="{{ week.start.isoformat() }}">
+    {% if date_error %}
+    <p class="field-error" id="jump-date-error">{{ date_error }}</p>
+    {% endif %}
+  </div>
+  <button type="submit">Show week</button>
+</form>
+{% with costs=week.costs %}
+{% include "partials/planner_costs.html" %}
+{% endwith %}
+<div class="week-grid">
+  {% for day in week.days %}
+  <section class="day-card">
+    <h2>{{ day.date_label }}</h2>
+    {% with slot=day.lunch %}
+    {% include "partials/planner_slot.html" %}
+    {% endwith %}
+    {% with slot=day.dinner %}
+    {% include "partials/planner_slot.html" %}
+    {% endwith %}
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

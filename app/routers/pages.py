@@ -16,11 +16,6 @@ def _page(request: Request, template_name: str, active: str) -> Response:
     )
 
 
-@router.get("/")
-def planner(request: Request) -> Response:
-    return _page(request, "planner.html", "planner")
-
-
 @router.get("/shopping")
 def shopping(request: Request) -> Response:
     return _page(request, "shopping.html", "shopping")

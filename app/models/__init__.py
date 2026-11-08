@@ -4,6 +4,7 @@ from app.models.base import Base
 from app.models.conversion import IngredientConversion
 from app.models.ingredient import Ingredient
 from app.models.meal import Meal, RecipeIngredient
+from app.models.planner import PlannerEntry, PlannerWeek
 from app.models.purchase import (
     PriceHistoryImmutableError,
     PurchaseOption,
@@ -17,6 +18,8 @@ __all__ = [
     "Ingredient",
     "IngredientConversion",
     "Meal",
+    "PlannerEntry",
+    "PlannerWeek",
     "RecipeIngredient",
     "PriceHistoryImmutableError",
     "PurchaseOption",

@@ -1,0 +1,18 @@
+<ul class="search-results">
+  {% for meal in meals %}
+  <li>
+    <form method="post" action="/planner/slots"
+          hx-post="/planner/slots"
+          hx-target="#{{ dom_id }}"
+          hx-swap="outerHTML">
+      <input type="hidden" name="date" value="{{ plan_date.isoformat() }}">
+      <input type="hidden" name="slot" value="{{ slot_name }}">
+      <input type="hidden" name="intent" value="save-meal">
+      <input type="hidden" name="meal_id" value="{{ meal.id }}">
+      <button type="submit">{{ meal.name }}</button>
+    </form>
+  </li>
+  {% else %}
+  <li>{% if query %}No matching meals.{% else %}No meals yet.{% endif %}</li>
+  {% endfor %}
+</ul>

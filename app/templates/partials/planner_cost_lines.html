@@ -1,0 +1,12 @@
+{% if entry and entry.entry_type == "meal" and cost %}
+{% if cost.is_complete %}
+<p>Estimated meal cost: {{ cost.total_pence | gbp }}</p>
+{% else %}
+<p>{{ cost.incomplete_label() }}</p>
+{% if cost.total_pence > 0 %}
+<p>Known meal cost: {{ cost.total_pence | gbp }}</p>
+{% endif %}
+{% endif %}
+{% elif entry and entry.entry_type == "takeaway" and entry.takeaway_price_pence is not none %}
+<p>Takeaway: {{ entry.takeaway_price_pence | gbp }}</p>
+{% endif %}

@@ -1,0 +1,18 @@
+<div id="week-costs"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+  <h2>Week costs</h2>
+  {% if costs.meal_count == 0 %}
+  <p>No meals planned</p>
+  {% elif costs.meal_is_complete %}
+  <p>Estimated meal cost: {{ costs.meal_total_pence | gbp }}</p>
+  {% else %}
+  <p>{{ costs.incomplete_label() }}</p>
+  {% if costs.meal_total_pence > 0 %}
+  <p>Known meal cost: {{ costs.meal_total_pence | gbp }}</p>
+  {% endif %}
+  {% endif %}
+  {% if costs.takeaway_count %}
+  <p>Takeaway: {{ costs.takeaway_total_pence | gbp }}</p>
+  {% else %}
+  <p>No takeaway</p>
+  {% endif %}
+</div>

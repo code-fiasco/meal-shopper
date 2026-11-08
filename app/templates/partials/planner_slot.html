@@ -1,0 +1,83 @@
+<article class="slot" id="{{ slot.dom_id }}">
+  <h3>{{ slot.slot_label }}</h3>
+  <p class="slot-choice">
+    {% with entry=slot.entry %}
+    {% include "partials/planner_assignment.html" %}
+    {% endwith %}
+  </p>
+  {% with entry=slot.entry, cost=slot.cost %}
+  {% include "partials/planner_cost_lines.html" %}
+  {% endwith %}
+  {% if slot.mode == "pick-meal" %}
+  <form class="filters" method="get" action="/planner/meal-search"
+        hx-get="/planner/meal-search"
+        hx-target="#results-{{ slot.dom_id }}"
+        hx-swap="innerHTML"
+        hx-trigger="keyup changed delay:300ms from:input, search, submit">
+    <input type="hidden" name="date" value="{{ slot.plan_date.isoformat() }}">
+    <input type="hidden" name="slot" value="{{ slot.slot }}">
+    <div class="field">
+      <label for="find-{{ slot.dom_id }}">Find meal</label>
+      <input id="find-{{ slot.dom_id }}" type="search" name="q" value="{{ slot.search_query }}">
+    </div>
+    <button type="submit">Search</button>
+  </form>
+  <div id="results-{{ slot.dom_id }}">
+    {% with meals=slot.meals, plan_date=slot.plan_date, slot_name=slot.slot, dom_id=slot.dom_id, query=slot.search_query %}
+    {% include "partials/planner_meal_results.html" %}
+    {% endwith %}
+  </div>
+  {% elif slot.mode == "pick-takeaway" %}
+  <form class="slot-form" method="post" action="/planner/slots"
+        hx-post="/planner/slots"
+        hx-target="#{{ slot.dom_id }}"
+        hx-swap="outerHTML">
+    <input type="hidden" name="date" value="{{ slot.plan_date.isoformat() }}">
+    <input type="hidden" name="slot" value="{{ slot.slot }}">
+    <div class="field">
+      <label for="price-{{ slot.dom_id }}">Price in £</label>
+      <input id="price-{{ slot.dom_id }}" name="takeaway_price" inputmode="decimal" value="{{ slot.draft_price }}">
+      {% if slot.errors.takeaway_price %}
+      <p class="field-error" id="{{ slot.dom_id }}-price-error">{{ slot.errors.takeaway_price }}</p>
+      {% endif %}
+    </div>
+    <div class="field">
+      <label for="description-{{ slot.dom_id }}">Description</label>
+      <input id="description-{{ slot.dom_id }}" name="takeaway_description" maxlength="200" value="{{ slot.draft_description }}">
+      {% if slot.errors.takeaway_description %}
+      <p class="field-error" id="{{ slot.dom_id }}-description-error">{{ slot.errors.takeaway_description }}</p>
+      {% endif %}
+    </div>
+    <div class="actions">
+      <button type="submit" name="intent" value="save-takeaway">Save takeaway</button>
+      <button class="button-secondary" type="submit" name="intent" value="show">Back</button>
+    </div>
+  </form>
+  {% else %}
+  <form class="slot-form" method="post" action="/planner/slots"
+        hx-post="/planner/slots"
+        hx-target="#{{ slot.dom_id }}"
+        hx-swap="outerHTML">
+    <input type="hidden" name="date" value="{{ slot.plan_date.isoformat() }}">
+    <input type="hidden" name="slot" value="{{ slot.slot }}">
+    <div class="actions">
+      <button type="submit" name="intent" value="blank">Blank</button>
+      <button type="submit" name="intent" value="pick-meal">Meal</button>
+      <button type="submit" name="intent" value="pick-takeaway">Takeaway</button>
+    </div>
+  </form>
+  {% endif %}
+  {% if slot.mode == "pick-meal" %}
+  <form method="post" action="/planner/slots"
+        hx-post="/planner/slots"
+        hx-target="#{{ slot.dom_id }}"
+        hx-swap="outerHTML">
+    <input type="hidden" name="date" value="{{ slot.plan_date.isoformat() }}">
+    <input type="hidden" name="slot" value="{{ slot.slot }}">
+    <button class="button-secondary" type="submit" name="intent" value="show">Back</button>
+  </form>
+  {% endif %}
+  {% if slot.errors.meal_id %}
+  <p class="field-error" id="{{ slot.dom_id }}-meal-error">{{ slot.errors.meal_id }}</p>
+  {% endif %}
+</article>

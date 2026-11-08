@@ -6,7 +6,7 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Ingredient, Meal, RecipeIngredient, Unit
+from app.models import Ingredient, Meal, PlannerEntry, RecipeIngredient, Unit
 from app.models.types import utcnow
 from app.models.unit import UnitFamily
 from app.services.costing import MealCost, cost_lines
@@ -60,12 +60,14 @@ class MealSummary:
 
 
 def historical_planner_entries(session: Session, meal_id: int) -> list[int]:
-    """Planner entry ids that already use this meal.
-
-    TODO Prompt 5: query planner entries once that table exists.
-    """
-    del session, meal_id
-    return []
+    """Planner entry ids that already use this meal."""
+    return list(
+        session.scalars(
+            select(PlannerEntry.id)
+            .where(PlannerEntry.meal_id == meal_id)
+            .order_by(PlannerEntry.id)
+        )
+    )
 
 
 def list_meals(
@@ -183,12 +185,25 @@ def duplicate_meal(session: Session, meal: Meal) -> Meal:
     return copy
 
 
+class MealInUseError(ValueError):
+    """Raised when a meal cannot be removed because history still points at it."""
+
+
 def set_meal_active(session: Session, meal: Meal, *, active: bool) -> Meal:
-    """Archive or restore a meal. Planner history is left for a later prompt."""
+    """Archive or restore a meal. Planner entries keep their snapshotted name."""
     meal.is_active = active
     meal.updated_at = utcnow()
     session.flush()
     return meal
+
+
+def delete_meal(session: Session, meal: Meal) -> None:
+    """Refuse hard deletion. A meal on a plan must be archived."""
+    if historical_planner_entries(session, meal.id):
+        raise MealInUseError(
+            "This meal is on a saved plan. Archive it instead of deleting it."
+        )
+    raise MealInUseError("Archive this meal instead of deleting it.")
 
 
 def prepare_lines(

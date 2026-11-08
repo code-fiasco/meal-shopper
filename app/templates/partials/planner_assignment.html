@@ -1,0 +1,7 @@
+{%- if entry is none or entry.entry_type == "blank" -%}
+Blank
+{%- elif entry.entry_type == "takeaway" -%}
+Takeaway{% if entry.takeaway_description %}: {{ entry.takeaway_description }}{% endif %}
+{%- else -%}
+{{ entry.snapshot_meal_name or "Meal" }}
+{%- endif -%}

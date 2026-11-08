@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meal plan {{ week.label }} · Meal Shopper</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="print-plan">
+  <main class="print-sheet">
+    <p class="no-print actions">
+      <a href="/planner?date={{ week.start.isoformat() }}">Back to planner</a>
+      {% if show_costs %}
+      <a href="/planner/print?date={{ week.start.isoformat() }}">Hide costs</a>
+      {% else %}
+      <a href="/planner/print?date={{ week.start.isoformat() }}&amp;costs=1">Show costs</a>
+      {% endif %}
+    </p>
+    <h1>Meal plan</h1>
+    <p class="week-range">{{ week.label }}</p>
+    <p>Lunch and dinner for two.</p>
+    <table class="plan-table">
+      <caption>Week of {{ week.label }}</caption>
+      <thead>
+        <tr>
+          <th scope="col">Day</th>
+          <th scope="col">Lunch</th>
+          <th scope="col">Dinner</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for day in week.days %}
+        <tr>
+          <th scope="row">{{ day.date_label }}</th>
+          <td>
+            {% with entry=day.lunch.entry %}
+            {% include "partials/planner_assignment.html" %}
+            {% endwith %}
+            {% if show_costs %}
+            {% with entry=day.lunch.entry, cost=day.lunch.cost %}
+            {% include "partials/planner_cost_lines.html" %}
+            {% endwith %}
+            {% endif %}
+          </td>
+          <td>
+            {% with entry=day.dinner.entry %}
+            {% include "partials/planner_assignment.html" %}
+            {% endwith %}
+            {% if show_costs %}
+            {% with entry=day.dinner.entry, cost=day.dinner.cost %}
+            {% include "partials/planner_cost_lines.html" %}
+            {% endwith %}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>
