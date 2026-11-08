@@ -1,0 +1,39 @@
+---
+description: Meal Shopper layers, money, quantities, history, and code conventions
+alwaysApply: true
+---
+
+# Meal Shopper conventions
+
+Stack: Python 3.12, FastAPI, SQLAlchemy 2.x typed declarative, Alembic, SQLite, Jinja2 + HTMX, pytest. Docker on Linux. Product behaviour is in `docs/spec.md`.
+
+## Layers
+
+Routers stay thin: validate input, call a service, return a response. Services own business rules and calculations. Models and repositories own persistence. Do not put business logic in routers or Jinja templates.
+
+## Money
+
+Store and calculate money as integer pence. Format to GBP (£) only in the display layer.
+
+```python
+price_pence = 179  # £1.79, formatted only when rendering
+unit_cost_pence = price_pence * quantity  # still integer pence
+```
+
+Do not store or calculate pounds as `float`.
+
+## Quantities
+
+Use `decimal.Decimal` for quantities, stored at a fixed precision. Never use `float`. Every quantity in the UI includes its unit (`200g`, `2 eggs`, `6 slices`).
+
+## History
+
+Snapshot names, quantities, pack details, and prices onto historical plans, shopping lists, and spend records. Do not recompute past data from current prices.
+
+## Deletion
+
+Archive with a flag. Do not delete a row that recipes, planner entries, or shopping records still reference.
+
+## Code
+
+Type hints on every function. Format with ruff. Keep functions small. Every service function that implements a business rule has unit tests.

@@ -1,0 +1,14 @@
+# Force LF line endings for every text file.
+* text=auto eol=lf
+
+# Treat known binaries as binary so line-ending conversion never touches them.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.db binary
+*.sqlite binary
+*.sqlite3 binary
