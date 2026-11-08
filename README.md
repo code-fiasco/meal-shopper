@@ -30,8 +30,9 @@ Ingredients and shops are usable:
 - Plan lunch and dinner across weeks, including takeaway prices kept separate from meal cost
 - Print the week in A4 landscape, with meal costs optional
 - Record pantry stock in each ingredient's canonical unit, and adjust it by hand
+- Generate a week's shopping list from planned meals, deduct pantry stock once, and round up to packs
 
-Shopping and spending are not built yet. The container still serves navigation and a health check, and the SQLite database lives on a host mount.
+The shopping page and spending are not built yet. The container still serves navigation and a health check, and the SQLite database lives on a host mount.
 
 ## Configuration
 
@@ -96,7 +97,7 @@ Confirm the file is still there and still has the migration stamp:
 test -f data/app.db && python -c "import sqlite3; print(sqlite3.connect('data/app.db').execute('select version_num from alembic_version').fetchone())"
 ```
 
-A surviving database prints `('0005_stock',)`.
+A surviving database prints `('0006_shopping',)`.
 
 To back up, stop the container and copy `data/app.db`. Copy that file back to restore. Start the container only after the copy finishes.
 

@@ -11,6 +11,7 @@ from app.models.purchase import (
     PurchasePriceHistory,
 )
 from app.models.shop import Shop
+from app.models.shopping import ShoppingList, ShoppingListLine
 from app.models.stock import PantryStock
 from app.models.unit import Unit, UnitFamily
 
@@ -27,6 +28,8 @@ __all__ = [
     "PurchaseOption",
     "PurchasePriceHistory",
     "Shop",
+    "ShoppingList",
+    "ShoppingListLine",
     "Unit",
     "UnitFamily",
 ]
