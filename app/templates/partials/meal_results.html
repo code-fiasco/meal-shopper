@@ -1,0 +1,28 @@
+<div id="meal-results" aria-live="polite">
+  {% if items %}
+  <ul class="cards">
+    {% for item in items %}
+    <li>
+      <a href="/meals/{{ item.id }}">{{ item.name }}</a>
+      <p>Two portions</p>
+      {% if item.cost.is_complete %}
+      <p>Estimated cost: {{ item.cost.total_pence | gbp }} for two</p>
+      <p>Per person: {{ item.cost.per_person_pence | gbp_exact }}</p>
+      {% else %}
+      <p>{{ item.cost.incomplete_label() }}</p>
+      {% if item.cost.total_pence > 0 %}
+      <p>Known ingredient cost: {{ item.cost.total_pence | gbp }}</p>
+      {% endif %}
+      {% endif %}
+      {% if not item.is_active %}
+      <p class="status">Archived</p>
+      {% elif status == "all" %}
+      <p class="status">Active</p>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No meals match this search.</p>
+  {% endif %}
+</div>

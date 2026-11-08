@@ -34,7 +34,10 @@ class PurchaseOption(Base):
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)
 
-    ingredient: Mapped["Ingredient"] = relationship(back_populates="purchase_options")
+    ingredient: Mapped["Ingredient"] = relationship(
+        back_populates="purchase_options",
+        foreign_keys=[ingredient_id],
+    )
     shop: Mapped["Shop"] = relationship()
     price_history: Mapped[list["PurchasePriceHistory"]] = relationship(
         back_populates="purchase_option",

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · Meal Shopper{% endblock %}
+{% block content %}
+<p><a href="/meals">Meals</a></p>
+<h1>{{ title }}</h1>
+<p>This recipe is for two portions.</p>
+<form method="post" action="{{ action }}">
+  <div class="field">
+    <label for="meal-name">Name</label>
+    <input
+      id="meal-name"
+      name="name"
+      type="text"
+      value="{{ values.name }}"
+      maxlength="200"
+      required
+      {% if errors.name %}aria-invalid="true" aria-describedby="meal-name-error"{% endif %}
+    >
+    {% if errors.name %}
+    <p id="meal-name-error" class="field-error" role="alert">Error: {{ errors.name }}</p>
+    {% endif %}
+  </div>
+  <div class="field">
+    <label for="meal-description">Description</label>
+    <textarea
+      id="meal-description"
+      name="description"
+      maxlength="2000"
+      {% if errors.description %}aria-invalid="true" aria-describedby="meal-description-error"{% endif %}
+    >{{ values.description }}</textarea>
+    {% if errors.description %}
+    <p id="meal-description-error" class="field-error" role="alert">Error: {{ errors.description }}</p>
+    {% endif %}
+  </div>
+  <div class="field">
+    <label for="meal-instructions">Instructions</label>
+    <textarea
+      id="meal-instructions"
+      name="instructions"
+      maxlength="8000"
+      {% if errors.instructions %}aria-invalid="true" aria-describedby="meal-instructions-error"{% endif %}
+    >{{ values.instructions }}</textarea>
+    {% if errors.instructions %}
+    <p id="meal-instructions-error" class="field-error" role="alert">Error: {{ errors.instructions }}</p>
+    {% endif %}
+  </div>
+  <h2>Ingredients</h2>
+  <div id="meal-lines">
+    {% for line in lines %}
+    {% include "partials/recipe_line.html" %}
+    {% endfor %}
+  </div>
+  <p>
+    <button
+      id="add-meal-line"
+      type="button"
+      class="button-secondary"
+      hx-get="/meals/lines/new?index={{ next_index }}"
+      hx-target="#meal-lines"
+      hx-swap="beforeend"
+    >Add ingredient</button>
+  </p>
+  <button type="submit">Save meal</button>
+</form>
+<div id="ingredient-panel" class="panel" aria-live="polite"></div>
+{% endblock %}

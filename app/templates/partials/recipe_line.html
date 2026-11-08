@@ -1,0 +1,43 @@
+<div class="recipe-line" id="line-{{ line.index }}">
+  {% include "partials/recipe_line_picker.html" %}
+  <div class="field">
+    <label for="line-{{ line.index }}-quantity">Quantity</label>
+    <input
+      id="line-{{ line.index }}-quantity"
+      name="entered_quantity"
+      type="text"
+      inputmode="decimal"
+      value="{{ line.entered_quantity }}"
+      {% if line.errors.entered_quantity %}aria-invalid="true" aria-describedby="line-{{ line.index }}-quantity-error"{% endif %}
+    >
+    {% if line.canonical_symbol %}
+    <p class="hint">Stored in {{ line.canonical_symbol }}.</p>
+    {% endif %}
+    {% if line.errors.entered_quantity %}
+    <p id="line-{{ line.index }}-quantity-error" class="field-error" role="alert">Error: {{ line.errors.entered_quantity }}</p>
+    {% endif %}
+  </div>
+  <div class="field">
+    <label for="line-{{ line.index }}-notes">Line notes</label>
+    <input
+      id="line-{{ line.index }}-notes"
+      name="line_notes"
+      type="text"
+      maxlength="500"
+      value="{{ line.notes }}"
+      {% if line.errors.notes %}aria-invalid="true" aria-describedby="line-{{ line.index }}-notes-error"{% endif %}
+    >
+    {% if line.errors.notes %}
+    <p id="line-{{ line.index }}-notes-error" class="field-error" role="alert">Error: {{ line.errors.notes }}</p>
+    {% endif %}
+  </div>
+  <p>
+    <button
+      type="button"
+      class="button-secondary"
+      hx-get="/meals/blank"
+      hx-target="closest .recipe-line"
+      hx-swap="outerHTML"
+    >Remove</button>
+  </p>
+</div>

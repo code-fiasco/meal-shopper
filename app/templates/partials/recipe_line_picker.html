@@ -1,0 +1,54 @@
+<div id="line-{{ line.index }}-picker" {% if oob %}hx-swap-oob="outerHTML"{% endif %}>
+  <input type="hidden" name="ingredient_id" value="{{ line.ingredient_id }}">
+  {% if line.ingredient_name %}
+  <p>{{ line.ingredient_name }}</p>
+  <p>Canonical unit: {{ line.canonical_name }} ({{ line.canonical_symbol }})</p>
+  {% endif %}
+  {% if line.errors.ingredient_id %}
+  <p id="line-{{ line.index }}-ingredient-error" class="field-error" role="alert">Error: {{ line.errors.ingredient_id }}</p>
+  {% endif %}
+  <div class="field">
+    <label for="line-{{ line.index }}-search">Find ingredient</label>
+    <input
+      id="line-{{ line.index }}-search"
+      name="q"
+      type="search"
+      value=""
+      autocomplete="off"
+      hx-get="/meals/ingredient-search?index={{ line.index }}"
+      hx-trigger="keyup changed delay:300ms, search"
+      hx-target="#line-{{ line.index }}-results"
+      hx-include="this"
+    >
+  </div>
+  <div id="line-{{ line.index }}-results"></div>
+  {% if line.units %}
+  <div class="field">
+    <label for="line-{{ line.index }}-unit">Unit</label>
+    <select
+      id="line-{{ line.index }}-unit"
+      name="entered_unit_id"
+      {% if line.errors.entered_unit_id %}aria-invalid="true" aria-describedby="line-{{ line.index }}-unit-error"{% endif %}
+    >
+      {% for unit in line.units %}
+      <option value="{{ unit.id }}" {% if line.entered_unit_id == unit.id|string %}selected{% endif %}>
+        {% if unit.name == unit.symbol %}{{ unit.symbol }}{% else %}{{ unit.name }} ({{ unit.symbol }}){% endif %}
+      </option>
+      {% endfor %}
+    </select>
+    {% if line.errors.entered_unit_id %}
+    <p id="line-{{ line.index }}-unit-error" class="field-error" role="alert">Error: {{ line.errors.entered_unit_id }}</p>
+    {% endif %}
+  </div>
+  {% else %}
+  <input type="hidden" name="entered_unit_id" value="">
+  {% endif %}
+  <p>
+    <button
+      type="button"
+      hx-get="/ingredients/form?embed=1&amp;line={{ line.index }}"
+      hx-target="#ingredient-panel"
+      hx-swap="innerHTML"
+    >Create new ingredient</button>
+  </p>
+</div>

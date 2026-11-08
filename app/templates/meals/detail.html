@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}{{ meal.name }} · Meal Shopper{% endblock %}
+{% block content %}
+<p><a href="/meals">Meals</a></p>
+<h1>{{ meal.name }}</h1>
+{% if meal.is_active %}
+<p class="status">Active</p>
+{% else %}
+<p class="status">Archived</p>
+{% endif %}
+<p>Two portions</p>
+{% if meal.description %}
+<p>{{ meal.description }}</p>
+{% endif %}
+{% if cost.is_complete %}
+<p>Estimated cost: {{ cost.total_pence | gbp }} for two</p>
+<p>Per person: {{ cost.per_person_pence | gbp_exact }}</p>
+{% else %}
+<p>{{ cost.incomplete_label() }}</p>
+{% if cost.total_pence > 0 %}
+<p>Known ingredient cost: {{ cost.total_pence | gbp }}</p>
+{% endif %}
+{% endif %}
+<p class="actions">
+  <a class="button" href="/meals/{{ meal.id }}/edit">Edit</a>
+  <form method="post" action="/meals/{{ meal.id }}/duplicate">
+    <button type="submit">Duplicate</button>
+  </form>
+  {% if meal.is_active %}
+  <details>
+    <summary>Archive</summary>
+    <form method="post" action="/meals/{{ meal.id }}/archive">
+      {% if planner_entry_ids %}
+      <p>This meal is on a saved plan. Archiving keeps those entries.</p>
+      {% else %}
+      <p>Archiving hides this meal. Saved plans will keep their own copy.</p>
+      {% endif %}
+      <button type="submit">Archive meal</button>
+    </form>
+  </details>
+  {% else %}
+  <form method="post" action="/meals/{{ meal.id }}/restore">
+    <button type="submit">Restore meal</button>
+  </form>
+  {% endif %}
+</p>
+{% if meal.instructions %}
+<h2>Instructions</h2>
+<p>{{ meal.instructions }}</p>
+{% endif %}
+<h2>Ingredients</h2>
+{% if cost.lines %}
+<ul class="cards">
+  {% for line in cost.lines %}
+  <li>
+    <p>{{ line.entered_quantity | qty(line.entered_unit_symbol) }} {{ line.ingredient_name }}</p>
+    {% if line.entered_unit_symbol != line.canonical_symbol %}
+    <p>Stored as {{ line.canonical_quantity | qty(line.canonical_symbol) }}</p>
+    {% endif %}
+    {% if meal.lines[loop.index0].notes %}
+    <p>{{ meal.lines[loop.index0].notes }}</p>
+    {% endif %}
+    {% if line.cost_pence is none %}
+    <p>no price</p>
+    {% else %}
+    <p>{{ line.cost_pence | gbp }}</p>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No ingredients yet.</p>
+{% endif %}
+{% endblock %}

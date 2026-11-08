@@ -1,4 +1,17 @@
-<form method="post" action="{{ action }}">
+<form
+  method="post"
+  action="{{ action }}"
+  {% if line %}
+  hx-post="{{ action }}"
+  hx-target="#ingredient-panel"
+  hx-swap="innerHTML"
+  {% endif %}
+>
+  {% if line %}
+  <h2>New ingredient</h2>
+  <p>This is added to the recipe line you started. The rest of the recipe stays as you typed it.</p>
+  <input type="hidden" name="line" value="{{ line }}">
+  {% endif %}
   {% if embed %}
   <input type="hidden" name="embed" value="1">
   {% endif %}
@@ -69,4 +82,13 @@
     {% endif %}
   </div>
   <button type="submit">Save ingredient</button>
+  {% if line %}
+  <button
+    type="button"
+    class="button-secondary"
+    hx-get="/meals/blank"
+    hx-target="#ingredient-panel"
+    hx-swap="innerHTML"
+  >Close</button>
+  {% endif %}
 </form>

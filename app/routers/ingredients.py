@@ -16,6 +16,7 @@ from app.services.ingredients import (
     get_ingredient,
     list_ingredients,
     purchase_option_views,
+    set_default_purchase_option,
     set_ingredient_active,
     update_ingredient,
 )
@@ -64,7 +65,7 @@ def new_ingredient(request: Request, session: Session = Depends(get_db)) -> Resp
 
 @router.get("/ingredients/form")
 def ingredient_form_partial(
-    request: Request, session: Session = Depends(get_db)
+    request: Request, line: str = "", session: Session = Depends(get_db)
 ) -> Response:
     return _ingredient_form(
         request,
@@ -73,6 +74,7 @@ def ingredient_form_partial(
         embed=True,
         values=_blank_ingredient(),
         errors={},
+        line=line,
     )
 
 
@@ -84,6 +86,7 @@ def post_ingredient(
     notes: str = Form(""),
     confirm_duplicate: str = Form(""),
     embed: str = Form(""),
+    line: str = Form(""),
     session: Session = Depends(get_db),
 ) -> Response:
     return _save_ingredient(
@@ -96,6 +99,7 @@ def post_ingredient(
         confirm_duplicate=confirm_duplicate == "yes",
         embed=embed == "1"
         or (_htmx(request) and request.query_params.get("embed") == "1"),
+        line=line,
     )
 
 
@@ -301,6 +305,26 @@ def archive_option(
     return RedirectResponse(f"/ingredients/{ingredient.id}", status_code=303)
 
 
+@router.post("/ingredients/{ingredient_id}/options/{option_id}/default")
+def choose_recipe_default(
+    ingredient_id: int, option_id: int, session: Session = Depends(get_db)
+) -> RedirectResponse:
+    ingredient = _require_ingredient(session, ingredient_id)
+    option = _require_option(ingredient, option_id)
+    set_default_purchase_option(ingredient, option)
+    return RedirectResponse(f"/ingredients/{ingredient.id}", status_code=303)
+
+
+@router.post("/ingredients/{ingredient_id}/options/{option_id}/default/clear")
+def clear_recipe_default(
+    ingredient_id: int, option_id: int, session: Session = Depends(get_db)
+) -> RedirectResponse:
+    ingredient = _require_ingredient(session, ingredient_id)
+    _require_option(ingredient, option_id)
+    set_default_purchase_option(ingredient, None)
+    return RedirectResponse(f"/ingredients/{ingredient.id}", status_code=303)
+
+
 @router.post("/ingredients/{ingredient_id}/options/{option_id}/restore")
 def restore_option(
     ingredient_id: int, option_id: int, session: Session = Depends(get_db)
@@ -343,6 +367,7 @@ def _save_ingredient(
     notes: str,
     confirm_duplicate: bool,
     embed: bool,
+    line: str = "",
 ) -> Response:
     from app.models import Ingredient
 
@@ -366,6 +391,7 @@ def _save_ingredient(
             values=values,
             errors=errors,
             embed=embed,
+            line=line,
             unit_locked=current is not None and _unit_locked(session, current.id),
             locked_unit=None if current is None else current.canonical_unit,
         )
@@ -397,6 +423,7 @@ def _save_ingredient(
             errors={},
             duplicate_warning=exc.warning,
             embed=embed,
+            line=line,
             unit_locked=current is not None and _unit_locked(session, current.id),
             locked_unit=None if current is None else current.canonical_unit,
         )
@@ -409,8 +436,21 @@ def _save_ingredient(
             values=values,
             errors={exc.field: str(exc)},
             embed=embed,
+            line=line,
             unit_locked=current is not None and _unit_locked(session, current.id),
             locked_unit=None if current is None else current.canonical_unit,
+        )
+    if embed and line.strip().isdigit():
+        from app.services.meals import line_form_for_ingredient, unit_catalog
+
+        return templates.TemplateResponse(
+            request,
+            "partials/recipe_line_created.html",
+            {
+                "line": line_form_for_ingredient(
+                    result.ingredient, int(line), unit_catalog(session)
+                )
+            },
         )
     if embed:
         return templates.TemplateResponse(
@@ -440,6 +480,7 @@ def _ingredient_page(
     errors: dict[str, str] | None = None,
     duplicate_warning: str | None = None,
     embed: bool = False,
+    line: str = "",
     unit_locked: bool = False,
     locked_unit: Unit | None = None,
 ) -> Response:
@@ -452,6 +493,7 @@ def _ingredient_page(
         errors=errors or {},
         duplicate_warning=duplicate_warning,
         title=title,
+        line=line,
         unit_locked=unit_locked,
         locked_unit=locked_unit,
     )
@@ -467,6 +509,7 @@ def _ingredient_form(
     errors: dict[str, str],
     duplicate_warning: str | None = None,
     title: str = "New ingredient",
+    line: str = "",
     unit_locked: bool = False,
     locked_unit: Unit | None = None,
 ) -> Response:
@@ -475,6 +518,7 @@ def _ingredient_form(
         "title": title,
         "action": action,
         "embed": embed,
+        "line": line,
         "values": values,
         "errors": errors,
         "duplicate_warning": duplicate_warning,

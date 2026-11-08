@@ -272,6 +272,33 @@ td {
   height: 1.25rem;
 }
 
+.recipe-line,
+.panel:not(:empty) {
+  margin: 0.75rem 0 1rem;
+  padding: 0.85rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+}
+
+.panel:not(:empty) {
+  border-width: 2px;
+  border-color: var(--header);
+}
+
+.search-results {
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.search-results button {
+  width: 100%;
+  justify-content: flex-start;
+  background: var(--paper);
+  color: var(--ink);
+}
+
 @media (max-width: 36rem) {
   .site-header {
     padding-inline: 0.75rem;

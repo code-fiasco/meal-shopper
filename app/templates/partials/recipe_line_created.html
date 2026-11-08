@@ -1,0 +1,10 @@
+<p>Added {{ line.ingredient_name }} ({{ line.canonical_symbol }}). It is selected on this line.</p>
+<button
+  type="button"
+  class="button-secondary"
+  hx-get="/meals/blank"
+  hx-target="#ingredient-panel"
+  hx-swap="innerHTML"
+>Close</button>
+{% set oob = true %}
+{% include "partials/recipe_line_picker.html" %}

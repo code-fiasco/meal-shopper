@@ -1,0 +1,14 @@
+<ul class="search-results">
+  {% for item in items %}
+  <li>
+    <button
+      type="button"
+      hx-get="/meals/ingredients/{{ item.id }}/picker?index={{ index }}"
+      hx-target="#line-{{ index }}-picker"
+      hx-swap="outerHTML"
+    >{{ item.name }} ({{ item.unit_symbol }})</button>
+  </li>
+  {% else %}
+  <li>No matching ingredients.</li>
+  {% endfor %}
+</ul>

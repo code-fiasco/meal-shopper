@@ -25,8 +25,10 @@ Ingredients and shops are usable:
 - Record several purchase options per ingredient (shop, pack quantity, pack label, price) and compare the price per canonical unit
 - Keep price history when a pack price or quantity changes
 - Add, rename, and archive shops
+- Create and edit two-portion meals, including an inline new ingredient that stays on the recipe
+- Estimate a meal's ingredient cost, and say which ingredients have no price
 
-Recipes, the planner, shopping, stock, and spending are not built yet. The container still serves navigation and a health check, and the SQLite database lives on a host mount.
+The planner, shopping, stock, and spending are not built yet. The container still serves navigation and a health check, and the SQLite database lives on a host mount.
 
 ## Configuration
 
@@ -91,7 +93,7 @@ Confirm the file is still there and still has the migration stamp:
 test -f data/app.db && python -c "import sqlite3; print(sqlite3.connect('data/app.db').execute('select version_num from alembic_version').fetchone())"
 ```
 
-A surviving database prints `('0002_catalog',)`.
+A surviving database prints `('0003_meals',)`.
 
 To back up, stop the container and copy `data/app.db`. Copy that file back to restore. Start the container only after the copy finishes.
 

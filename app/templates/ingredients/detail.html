@@ -44,6 +44,16 @@
     <p class="status">Archived</p>
     {% endif %}
     <p class="actions">
+      {% if ingredient.default_purchase_option_id == option.id %}
+      <span class="status">Used for recipe costing</span>
+      <form method="post" action="/ingredients/{{ ingredient.id }}/options/{{ option.id }}/default/clear">
+        <button type="submit">Stop using this for recipes</button>
+      </form>
+      {% elif option.is_active %}
+      <form method="post" action="/ingredients/{{ ingredient.id }}/options/{{ option.id }}/default">
+        <button type="submit">Use for recipe costing</button>
+      </form>
+      {% endif %}
       <a href="/ingredients/{{ ingredient.id }}/options/{{ option.id }}/edit">Edit</a>
       <a
         href="/ingredients/{{ ingredient.id }}/options/{{ option.id }}/history"

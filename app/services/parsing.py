@@ -41,6 +41,26 @@ def parse_gbp_to_pence(raw: str) -> int:
     return int(amount * Decimal(100))
 
 
+def parse_recipe_quantity(raw: str, *, unit_symbol: str) -> Decimal:
+    """Parse a recipe amount. Zero is allowed. Negative amounts are rejected."""
+    text = raw.strip().replace(" ", "")
+    if not text:
+        raise InvalidQuantityError(f"Enter a quantity in {unit_symbol}.")
+    if "," in text:
+        raise InvalidQuantityError(
+            f"Enter the quantity in {unit_symbol}, such as 2 or 0.5."
+        )
+    try:
+        quantity = Decimal(text)
+    except InvalidOperation:
+        raise InvalidQuantityError(
+            f"Enter the quantity in {unit_symbol}, such as 2 or 0.5."
+        ) from None
+    if not quantity.is_finite() or quantity < 0:
+        raise InvalidQuantityError(f"Quantity in {unit_symbol} cannot be negative.")
+    return quantity
+
+
 def parse_pack_quantity(raw: str, *, unit_symbol: str) -> Decimal:
     """Parse a pack size. Zero and negative amounts are rejected."""
     text = raw.strip().replace(" ", "")

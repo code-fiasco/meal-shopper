@@ -1,0 +1,10 @@
+{% include "partials/recipe_line.html" %}
+<button
+  id="add-meal-line"
+  type="button"
+  class="button-secondary"
+  hx-get="/meals/lines/new?index={{ next_index }}"
+  hx-target="#meal-lines"
+  hx-swap="beforeend"
+  hx-swap-oob="outerHTML"
+>Add ingredient</button>

@@ -129,6 +129,19 @@ def update_ingredient(
     return IngredientWrite(ingredient=ingredient, duplicate_warning=warning)
 
 
+def set_default_purchase_option(
+    ingredient: Ingredient, option: PurchaseOption | None
+) -> Ingredient:
+    """Choose which active pack recipe costing should use."""
+    if option is not None and option.ingredient_id != ingredient.id:
+        raise FieldValidationError(
+            "default",
+            "Choose a purchase option that belongs to this ingredient.",
+        )
+    ingredient.default_purchase_option_id = None if option is None else option.id
+    return ingredient
+
+
 def set_ingredient_active(
     session: Session, ingredient: Ingredient, *, active: bool
 ) -> Ingredient:

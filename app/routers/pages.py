@@ -21,11 +21,6 @@ def planner(request: Request) -> Response:
     return _page(request, "planner.html", "planner")
 
 
-@router.get("/meals")
-def meals(request: Request) -> Response:
-    return _page(request, "meals.html", "meals")
-
-
 @router.get("/shopping")
 def shopping(request: Request) -> Response:
     return _page(request, "shopping.html", "shopping")
