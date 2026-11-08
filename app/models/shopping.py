@@ -53,6 +53,43 @@ class ShoppingListLine(Base):
             "source IN ('generated', 'manual')",
             name="ck_shopping_list_lines_source",
         ),
+        CheckConstraint(
+            "CAST(required_quantity AS NUMERIC) >= 0",
+            name="ck_shopping_list_lines_required",
+        ),
+        CheckConstraint(
+            "CAST(stock_allocated AS NUMERIC) >= 0",
+            name="ck_shopping_list_lines_stock",
+        ),
+        CheckConstraint(
+            "CAST(net_quantity AS NUMERIC) >= 0",
+            name="ck_shopping_list_lines_net",
+        ),
+        CheckConstraint(
+            "pack_quantity IS NULL OR CAST(pack_quantity AS NUMERIC) > 0",
+            name="ck_shopping_list_lines_pack_quantity",
+        ),
+        CheckConstraint(
+            "quantity_override IS NULL OR CAST(quantity_override AS NUMERIC) >= 0",
+            name="ck_shopping_list_lines_override",
+        ),
+        CheckConstraint("pack_count >= 0", name="ck_shopping_list_lines_pack_count"),
+        CheckConstraint(
+            "pack_count_override IS NULL OR pack_count_override >= 0",
+            name="ck_shopping_list_lines_pack_count_override",
+        ),
+        CheckConstraint(
+            "pack_price_pence IS NULL OR pack_price_pence >= 0",
+            name="ck_shopping_list_lines_pack_price",
+        ),
+        CheckConstraint(
+            "estimated_price_pence IS NULL OR estimated_price_pence >= 0",
+            name="ck_shopping_list_lines_estimated_price",
+        ),
+        CheckConstraint(
+            "manual_price_pence IS NULL OR manual_price_pence >= 0",
+            name="ck_shopping_list_lines_manual_price",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)

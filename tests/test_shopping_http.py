@@ -282,6 +282,9 @@ def test_checklist_tick_persists_and_print_is_plain(
     assert "Minced beef" in printed.text
     assert "2 packs" in printed.text
     assert "£7.00" in printed.text
+    assert 'name="viewport"' in checklist.text
+    stylesheet = client.get("/static/app.css")
+    assert "min-height: 48px" in stylesheet.text
     assert "print-box" in printed.text
     assert "<nav" not in printed.text
     assert "Skip to content" not in printed.text

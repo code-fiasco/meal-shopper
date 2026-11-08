@@ -5,11 +5,13 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from app.auth import BasicAuthMiddleware, configured_credentials
 from app.routers import (
     health,
     ingredients,
     meals,
     planner,
+    settings,
     shopping,
     shops,
     spend,
@@ -21,6 +23,7 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 def create_app() -> FastAPI:
     """Build the application. Docs UIs stay off because they load remote assets."""
+    configured_credentials()
     application = FastAPI(
         title="Meal Shopper",
         docs_url=None,
@@ -36,6 +39,8 @@ def create_app() -> FastAPI:
     application.include_router(stock.router)
     application.include_router(shopping.router)
     application.include_router(spend.router)
+    application.include_router(settings.router)
+    application.add_middleware(BasicAuthMiddleware)
     return application
 
 

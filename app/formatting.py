@@ -1,6 +1,6 @@
 """Display formatting. Storage stays in pence and Decimal quantities."""
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from zoneinfo import ZoneInfo
 
@@ -55,6 +55,32 @@ def format_quantity_input(quantity: Decimal) -> str:
     if isinstance(quantity, float) or not isinstance(quantity, Decimal):
         raise TypeError("Quantity must be Decimal, not float.")
     return format(quantity.normalize(), "f")
+
+
+_SHEET_MONTHS = (
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+)
+
+
+def format_sheet_date(day: date) -> str:
+    """Compact print date, for example 09-Nov."""
+    return f"{day.day:02d}-{_SHEET_MONTHS[day.month - 1]}"
+
+
+def format_week_commencing(day: date) -> str:
+    """UK week-commencing label, for example w/c 09/11/26."""
+    return f"w/c {day.day:02d}/{day.month:02d}/{day.year % 100:02d}"
 
 
 def format_local(value: datetime, timezone_name: str) -> str:

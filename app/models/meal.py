@@ -4,7 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import CheckConstraint, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -39,6 +39,16 @@ class RecipeIngredient(Base):
     """One ingredient line. Quantity is stored in the canonical unit."""
 
     __tablename__ = "recipe_ingredients"
+    __table_args__ = (
+        CheckConstraint(
+            "CAST(quantity AS NUMERIC) >= 0",
+            name="ck_recipe_ingredients_quantity",
+        ),
+        CheckConstraint(
+            "CAST(entered_quantity AS NUMERIC) >= 0",
+            name="ck_recipe_ingredients_entered_quantity",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     meal_id: Mapped[int] = mapped_column(ForeignKey("meals.id"), index=True)

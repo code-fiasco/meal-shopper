@@ -1,13 +1,38 @@
 <article class="slot" id="{{ slot.dom_id }}">
-  <h3>{{ slot.slot_label }}</h3>
-  <p class="slot-choice">
-    {% with entry=slot.entry %}
-    {% include "partials/planner_assignment.html" %}
-    {% endwith %}
-  </p>
-  {% with entry=slot.entry, cost=slot.cost %}
-  {% include "partials/planner_cost_lines.html" %}
-  {% endwith %}
+  <div class="slot-row">
+    <div class="slot-main">
+      <h3>{{ slot.slot_label }}</h3>
+      <p class="slot-choice">
+        {% with entry=slot.entry %}
+        {% include "partials/planner_assignment.html" %}
+        {% endwith %}
+      </p>
+      {% with entry=slot.entry, cost=slot.cost %}
+      {% include "partials/planner_cost_lines.html" %}
+      {% endwith %}
+    </div>
+    {% if slot.mode != "pick-meal" and slot.mode != "pick-takeaway" %}
+    <details class="slot-menu no-print">
+      <summary class="slot-edit" aria-label="Edit {{ slot.slot_label }} on {{ slot.plan_date.strftime('%A %d %b') }}">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+        </svg>
+      </summary>
+      <form class="slot-form" method="post" action="/planner/slots"
+            hx-post="/planner/slots"
+            hx-target="#{{ slot.dom_id }}"
+            hx-swap="outerHTML">
+        <input type="hidden" name="date" value="{{ slot.plan_date.isoformat() }}">
+        <input type="hidden" name="slot" value="{{ slot.slot }}">
+        <div class="slot-menu-panel" role="menu" aria-label="{{ slot.slot_label }} choices">
+          <button type="submit" name="intent" value="blank" role="menuitem">Blank</button>
+          <button type="submit" name="intent" value="pick-meal" role="menuitem">Meal</button>
+          <button type="submit" name="intent" value="pick-takeaway" role="menuitem">Takeaway</button>
+        </div>
+      </form>
+    </details>
+    {% endif %}
+  </div>
   {% if slot.mode == "pick-meal" %}
   <form class="filters" method="get" action="/planner/meal-search"
         hx-get="/planner/meal-search"
@@ -51,19 +76,6 @@
     <div class="actions">
       <button type="submit" name="intent" value="save-takeaway">Save takeaway</button>
       <button class="button-secondary" type="submit" name="intent" value="show">Back</button>
-    </div>
-  </form>
-  {% else %}
-  <form class="slot-form" method="post" action="/planner/slots"
-        hx-post="/planner/slots"
-        hx-target="#{{ slot.dom_id }}"
-        hx-swap="outerHTML">
-    <input type="hidden" name="date" value="{{ slot.plan_date.isoformat() }}">
-    <input type="hidden" name="slot" value="{{ slot.slot }}">
-    <div class="actions">
-      <button type="submit" name="intent" value="blank">Blank</button>
-      <button type="submit" name="intent" value="pick-meal">Meal</button>
-      <button type="submit" name="intent" value="pick-takeaway">Takeaway</button>
     </div>
   </form>
   {% endif %}

@@ -12,7 +12,7 @@
   <a class="button button-secondary" href="/planner?date={{ week.previous.isoformat() }}">Previous week</a>
   <a class="button button-secondary" href="/planner?date={{ week.following.isoformat() }}">Next week</a>
   <a class="button button-secondary" href="/planner">This week</a>
-  <a class="button" href="/planner/print?date={{ week.start.isoformat() }}">Print view</a>
+  <a class="button" href="/planner/pdf?date={{ week.start.isoformat() }}" target="_blank" rel="noopener">Generate PDF</a>
 </p>
 <form class="filters no-print" method="get" action="/planner">
   <div class="field">

@@ -1,8 +1,10 @@
-"""Planner pages: persistence, takeaway validation, and the print view."""
+"""Planner pages: persistence, takeaway validation, and the meal-plan PDF."""
 
 from datetime import date
+from io import BytesIO
 
 from fastapi.testclient import TestClient
+from pypdf import PdfReader
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from tests.test_planner import _rice_meal
@@ -28,7 +30,8 @@ def test_planner_shows_the_current_week_without_creating_one(
     assert format_week_range(start) in response.text
     assert "Previous week" in response.text
     assert "Next week" in response.text
-    assert "Print view" in response.text
+    assert "Generate PDF" in response.text
+    assert f'href="/planner/pdf?date={start.isoformat()}"' in response.text
     assert "Monday" in response.text
     assert "Sunday" in response.text
     previous = shift_week(start, -1).isoformat()
@@ -155,9 +158,14 @@ def test_repeated_meal_and_takeaway_stay_on_the_page(
     assert "This meal is on a saved plan" in detail.text
 
 
-def test_print_view_lists_the_week_without_navigation(
+def test_generate_pdf_is_one_a4_landscape_page(
     client: TestClient, session: Session
 ) -> None:
+    empty = client.get("/planner/pdf?date=2026-11-02")
+    assert empty.status_code == 200
+    session.rollback()
+    assert session.scalar(select(func.count()).select_from(PlannerWeek)) == 0
+
     meal = _rice_meal(session)
     session.commit()
     client.post(
@@ -169,18 +177,39 @@ def test_print_view_lists_the_week_without_navigation(
             "meal_id": str(meal.id),
         },
     )
-    page = client.get("/planner/print?date=2026-11-02")
+    client.post(
+        "/planner/slots",
+        data={
+            "date": "2026-11-03",
+            "slot": "dinner",
+            "intent": "save-takeaway",
+            "takeaway_price": "12.50",
+            "takeaway_description": "Curry",
+        },
+    )
+    page = client.get("/planner/pdf?date=2026-11-02")
     assert page.status_code == 200
-    body = page.text
-    assert 'class="print-plan"' in body
-    assert "<nav" not in body
-    assert "<button" not in body
-    assert "Monday 2 Nov" in body
-    assert "Sunday 8 Nov" in body
-    assert "Fried rice" in body
-    assert "Estimated meal cost" not in body
-    assert "incomplete:" not in body
-    shown = client.get("/planner/print?date=2026-11-02&costs=1")
-    assert "incomplete: missing price for Rice" in shown.text
-    stylesheet = client.get("/static/app.css")
-    assert "A4 landscape" in stylesheet.text
+    assert page.headers["content-type"] == "application/pdf"
+    disposition = page.headers["content-disposition"]
+    assert 'filename="meal-plan-2026-11-02.pdf"' in disposition
+    reader = PdfReader(BytesIO(page.content))
+    assert len(reader.pages) == 1
+    box = reader.pages[0].mediabox
+    assert abs(float(box.width) - 841.89) < 2
+    assert abs(float(box.height) - 595.28) < 2
+    text = reader.pages[0].extract_text() or ""
+    assert "Meal Planner" in text
+    assert "w/c 02/11/26" in text
+    assert "Monday" in text
+    assert "02-Nov" in text
+    assert "08-Nov" in text
+    assert "09-Nov" in text
+    assert "15-Nov" in text
+    assert "Lunch" in text
+    assert "Dinner" in text
+    assert "Fried rice" in text
+    assert "Takeaway: Curry" in text
+    assert "Blank" not in text
+    assert "Estimated meal cost" not in text
+    assert "incomplete:" not in text
+    assert "£" not in text

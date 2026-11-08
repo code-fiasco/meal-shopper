@@ -10,7 +10,9 @@ def test_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv(name, raising=False)
     get_settings.cache_clear()
     settings = get_settings()
-    assert settings.app_port == 8000
+    assert settings.app_port == 5373
+    assert settings.app_auth_user == ""
+    assert settings.app_auth_password == ""
     assert settings.database_url == "sqlite:////data/app.db"
     assert settings.app_timezone == "Europe/London"
     assert settings.app_env == "development"

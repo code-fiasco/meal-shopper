@@ -55,6 +55,10 @@ class ShoppingTransactionLine(Base):
             "actual_price_pence IS NULL OR actual_price_pence >= 0",
             name="ck_shopping_transaction_lines_price",
         ),
+        CheckConstraint(
+            "actual_quantity IS NULL OR CAST(actual_quantity AS NUMERIC) >= 0",
+            name="ck_shopping_transaction_lines_quantity",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)

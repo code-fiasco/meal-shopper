@@ -32,6 +32,9 @@ def test_create_ingredient_with_canonical_unit(
     assert "<select" in form.text
     assert "slice" in form.text
     assert "<html" not in form.text.lower()
+    found = client.get("/meals/ingredient-search?q=Ham&index=0")
+    assert found.status_code == 200
+    assert "Ham" in found.text
 
 
 def test_duplicate_name_warns_until_confirmed(

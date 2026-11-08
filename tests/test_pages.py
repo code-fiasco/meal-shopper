@@ -10,6 +10,7 @@ PAGES = (
     ("/shopping", "Shopping"),
     ("/stock", "Stock"),
     ("/spending", "Spending"),
+    ("/settings", "Settings"),
 )
 
 

@@ -9,7 +9,7 @@ RUN pip wheel --no-cache-dir --wheel-dir /wheels .
 FROM python:3.12-slim
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gosu tzdata \
+    && apt-get install -y --no-install-recommends fonts-dejavu-core gosu tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --gid 1000 app \
@@ -25,5 +25,5 @@ COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod 755 /entrypoint.sh
 
 ENV PYTHONUNBUFFERED=1
-EXPOSE 8000
+EXPOSE 5373
 ENTRYPOINT ["/entrypoint.sh"]

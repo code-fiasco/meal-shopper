@@ -3,7 +3,7 @@
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import CheckConstraint, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -18,6 +18,12 @@ class IngredientConversion(Base):
     """Explicit factor from one unit into the ingredient's canonical unit."""
 
     __tablename__ = "ingredient_conversions"
+    __table_args__ = (
+        CheckConstraint(
+            "CAST(factor_to_canonical AS NUMERIC) > 0",
+            name="ck_ingredient_conversions_factor",
+        ),
+    )
 
     ingredient_id: Mapped[int] = mapped_column(
         ForeignKey("ingredients.id"), primary_key=True

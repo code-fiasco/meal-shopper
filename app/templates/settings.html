@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Settings · Meal Shopper{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+<p>Download a consistent copy of the database. SQLite's online backup is used, so the app can stay running.</p>
+<p class="actions">
+  <a class="button" href="/settings/backup">Download backup</a>
+</p>
+<p>The same file is kept in the data directory under <code>backups/</code>.</p>
+{% endblock %}

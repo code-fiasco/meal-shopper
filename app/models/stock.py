@@ -4,7 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import CheckConstraint, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -18,6 +18,12 @@ class PantryStock(Base):
     """On-hand quantity for one ingredient. The ingredient id is unique."""
 
     __tablename__ = "pantry_stock"
+    __table_args__ = (
+        CheckConstraint(
+            "CAST(quantity_on_hand AS NUMERIC) >= 0",
+            name="ck_pantry_stock_quantity",
+        ),
+    )
 
     ingredient_id: Mapped[int] = mapped_column(
         ForeignKey("ingredients.id", ondelete="RESTRICT"), primary_key=True

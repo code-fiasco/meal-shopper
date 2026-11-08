@@ -4,7 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, String, event
+from sqlalchemy import CheckConstraint, ForeignKey, String, event
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -23,6 +23,13 @@ class PurchaseOption(Base):
     """A pack of an ingredient sold by one shop, priced in integer pence."""
 
     __tablename__ = "purchase_options"
+    __table_args__ = (
+        CheckConstraint("price_pence >= 0", name="ck_purchase_options_price"),
+        CheckConstraint(
+            "CAST(pack_quantity AS NUMERIC) > 0",
+            name="ck_purchase_options_pack",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     ingredient_id: Mapped[int] = mapped_column(ForeignKey("ingredients.id"), index=True)
@@ -49,6 +56,13 @@ class PurchasePriceHistory(Base):
     """Snapshot of a pack price. Rows are inserted and then left unchanged."""
 
     __tablename__ = "purchase_price_history"
+    __table_args__ = (
+        CheckConstraint("price_pence >= 0", name="ck_purchase_price_history_price"),
+        CheckConstraint(
+            "CAST(pack_quantity AS NUMERIC) > 0",
+            name="ck_purchase_price_history_pack",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     purchase_option_id: Mapped[int] = mapped_column(

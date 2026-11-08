@@ -6,4 +6,4 @@ mkdir -p /data
 chown app:app /data
 
 gosu app alembic upgrade head
-exec gosu app uvicorn app.main:app --host 0.0.0.0 --port "${APP_PORT:-8000}"
+exec gosu app uvicorn app.main:app --host 0.0.0.0 --port "${APP_PORT:-5373}"

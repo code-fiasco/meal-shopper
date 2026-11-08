@@ -365,24 +365,79 @@ main.wide {
   font-weight: 650;
 }
 
-@page plan {
-  size: A4 landscape;
-  margin: 12mm;
+.slot-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.35rem;
 }
 
-body.print-plan {
-  page: plan;
-  background: #fff;
+.slot-main {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
-.print-sheet {
-  max-width: none;
-  margin: 0 auto;
-  padding: 1rem;
+.slot-menu {
+  position: relative;
+  flex: 0 0 auto;
 }
 
-.plan-table th[scope="row"] {
-  width: 16%;
+.slot-edit {
+  width: 1.75rem;
+  height: 1.75rem;
+  min-width: 1.75rem;
+  min-height: 1.75rem;
+  padding: 0;
+  list-style: none;
+  border-radius: 0.25rem;
+  background: var(--paper);
+  color: var(--ink);
+  border: 2px solid #44403c;
+}
+
+.slot-edit::-webkit-details-marker {
+  display: none;
+}
+
+.slot-edit::marker {
+  content: "";
+}
+
+.slot-menu[open] > .slot-edit {
+  background: var(--header);
+  color: var(--header-text);
+}
+
+.slot-menu-panel {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 8.5rem;
+  margin: 0;
+  padding: 0.25rem;
+  background: var(--paper);
+  border: 2px solid var(--header);
+  border-radius: 0.35rem;
+  box-shadow: 0 0.35rem 0.9rem rgba(28, 25, 23, 0.18);
+}
+
+.slot-menu-panel button {
+  width: 100%;
+  min-height: 2.25rem;
+  justify-content: flex-start;
+  padding-inline: 0.65rem;
+  background: transparent;
+  color: var(--ink);
+  border-color: transparent;
+  font-weight: 650;
+}
+
+.slot-menu-panel button:hover,
+.slot-menu-panel button:focus-visible {
+  background: var(--cream);
 }
 
 @media (max-width: 70rem) {
@@ -411,6 +466,10 @@ body.print-plan {
   .day-card .actions button,
   .slot .actions button {
     width: 100%;
+    min-height: 48px;
+  }
+
+  .slot-menu-panel button {
     min-height: 48px;
   }
 }
@@ -561,6 +620,7 @@ body.print-list {
   .skip,
   nav,
   button,
+  .slot-menu,
   .slot-form,
   .filters,
   .actions {

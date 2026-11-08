@@ -3,13 +3,18 @@ services:
     build: .
     image: meal-shopper:local
     ports:
-      - "${APP_PORT:-8000}:${APP_PORT:-8000}"
+      # Localhost only. cloudflared on this host is the way in, with
+      # Cloudflare Access in front of the tunnel. Do not bind 0.0.0.0,
+      # and do not expose this port to the internet any other way.
+      - "127.0.0.1:${APP_PORT:-5373}:${APP_PORT:-5373}"
     environment:
-      APP_PORT: ${APP_PORT:-8000}
+      APP_PORT: ${APP_PORT:-5373}
       DATABASE_URL: ${DATABASE_URL:-sqlite:////data/app.db}
       APP_TIMEZONE: ${APP_TIMEZONE:-Europe/London}
       TZ: ${TZ:-Europe/London}
       APP_ENV: ${APP_ENV:-production}
+      APP_AUTH_USER: ${APP_AUTH_USER:-}
+      APP_AUTH_PASSWORD: ${APP_AUTH_PASSWORD:-}
     volumes:
       # Host directory survives container removal. The database file is /data/app.db.
       - ./data:/data
@@ -19,7 +24,7 @@ services:
           "CMD",
           "python",
           "-c",
-          "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/health' % os.environ.get('APP_PORT', '8000'))",
+          "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/health' % os.environ.get('APP_PORT', '5373'))",
         ]
       interval: 5s
       timeout: 3s

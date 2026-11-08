@@ -17,7 +17,7 @@ def test_upgrade_head_creates_version_table(database_url: str) -> None:
             text("SELECT version_num FROM alembic_version")
         ).scalar()
     check.dispose()
-    assert version == "0007_spend"
+    assert version == "0008_integrity"
 
 
 def test_entrypoint_uses_lf_line_endings() -> None:

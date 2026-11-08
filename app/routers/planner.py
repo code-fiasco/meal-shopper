@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.db import get_db
 from app.services.parsing import FieldValidationError
+from app.services.plan_pdf import render_meal_plan_pdf
 from app.services.planner import (
     DINNER,
     LUNCH,
@@ -22,6 +23,7 @@ from app.services.planner import (
     local_today,
     open_editor,
     search_meals,
+    shift_week,
     week_start_for,
 )
 from app.templating import templates
@@ -47,20 +49,20 @@ def planner_page(
     return _page(request, week, date_error)
 
 
-@router.get("/planner/print")
-def planner_print(
-    request: Request,
+@router.get("/planner/pdf")
+def planner_pdf(
     date_value: Annotated[str, Query(alias="date")] = "",
-    costs: str = "",
     session: Session = Depends(get_db),
 ) -> Response:
     today = _today()
     anchor, _error = _anchor(date_value, today)
     week = build_week(session, anchor, today=today)
-    return templates.TemplateResponse(
-        request,
-        "planner/print.html",
-        {"week": week, "show_costs": costs == "1"},
+    following = build_week(session, shift_week(week.start, 1), today=today)
+    filename = f"meal-plan-{week.start.isoformat()}.pdf"
+    return Response(
+        content=render_meal_plan_pdf(week, following),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{filename}"'},
     )
 
 

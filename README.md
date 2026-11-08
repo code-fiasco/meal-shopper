@@ -1,109 +1,101 @@
 # Meal Shopper
 
-Self-hosted meal planner and shopping app for a two-person household. It keeps a recipe and ingredient library with shop-specific pack prices, plans lunch and dinner across weeks, builds a shopping list that accounts for pantry stock, and records what was actually spent.
+Self-hosted meal planner and shopping app for a two-person household. Recipes and ingredients keep shop-specific pack prices, the planner covers lunch and dinner, the shopping list accounts for pantry stock, and spending records what was actually paid.
 
-Product behaviour is specified in [docs/spec.md](docs/spec.md) (SRS v1.0).
+Product behaviour is specified in [docs/spec.md](docs/spec.md). Acceptance checks are in [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md).
 
-## Stack
+## Install
 
-- Python 3.12
-- FastAPI
-- SQLAlchemy 2.x (typed declarative)
-- Alembic
-- SQLite
-- Jinja2 templates and HTMX 2.0.4 (vendored at `app/static/htmx.min.js`, no CDN)
-- Chart.js 4.4.6 (vendored at `app/static/chart.umd.min.js`, no CDN)
-- pytest
-- Docker on a Linux server
-
-## Status
-
-Ingredients and shops are usable:
-
-- Create and edit an ingredient with a canonical unit, notes, and a duplicate-name warning that can be overridden
-- Search the ingredient list and filter active or archived records
-- Archive an ingredient instead of deleting it
-- Record several purchase options per ingredient (shop, pack quantity, pack label, price) and compare the price per canonical unit
-- Keep price history when a pack price or quantity changes, and chart those saved prices
-- Add, rename, and archive shops
-- Create and edit two-portion meals, including an inline new ingredient that stays on the recipe
-- Estimate a meal's ingredient cost, and say which ingredients have no price
-- Plan lunch and dinner across weeks, including takeaway prices kept separate from meal cost
-- Print the week in A4 landscape, with meal costs optional
-- Record pantry stock in each ingredient's canonical unit, and adjust it by hand
-- Generate a week's shopping list from planned meals, deduct pantry stock once, and round up to packs
-- Adjust that list in the browser: change the pack, quantity, price, or stock, and add items that are not on a recipe
-- Tick the phone checklist, and print the list as a plain A4 page
-- Record what a shop actually cost, without copying the estimate, and chart grocery, takeaway, and the estimate separately
-
-The container serves the app and a health check, and the SQLite database lives on a host mount.
-
-## Configuration
-
-Copy the example environment file if you want to override the defaults:
+Requirements: Docker, on a Linux host.
 
 ```bash
+git clone git@github.com:code-fiasco/meal-shopper.git
+cd meal-shopper
 cp .env.example .env
-```
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `APP_PORT` | `8000` | Host port and the port uvicorn listens on inside the container |
-| `DATABASE_URL` | `sqlite:////data/app.db` | Database file. `/data` is the mounted volume |
-| `APP_TIMEZONE` | `Europe/London` | Application timezone. Wins over `TZ` when both are set |
-| `TZ` | `Europe/London` | Accepted as the timezone, and sets the container clock |
-| `APP_ENV` | `production` in Compose, `development` in code | Runtime environment name |
-
-Do not commit `.env`. The database file and the `data/` directory stay on the host and are gitignored.
-
-## Run with Docker
-
-Build the image and start the app in the background:
-
-```bash
 docker compose up --build -d --wait
 ```
 
-Open `http://127.0.0.1:8000/` on this machine, or `http://<server>:8000/` from another device on the LAN. Check the process with:
+Open http://127.0.0.1:5373/ on this machine. The published port is bound to localhost only.
 
 ```bash
-curl -fsS http://127.0.0.1:8000/health
+curl -fsS http://127.0.0.1:5373/health
 ```
 
 The response is `{"status":"ok"}`.
 
-The published port is reachable on the host's network interfaces. Do not forward it from your router to the public internet; the app has no authentication.
+## Configuration
 
-Stop the container, leaving the database file in place:
+Copy `.env.example` to `.env` to override the defaults. Do not commit `.env`.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `APP_PORT` | `5373` | Port inside the container, and the localhost port on the host |
+| `DATABASE_URL` | `sqlite:////data/app.db` | Database file. `/data` is the `./data` mount |
+| `APP_TIMEZONE` | `Europe/London` | Application timezone. Wins over `TZ` when both are set |
+| `TZ` | `Europe/London` | Accepted as the timezone, and sets the container clock |
+| `APP_ENV` | `production` in Compose | Runtime environment name |
+| `APP_AUTH_USER` | unset | Optional Basic auth username. Set together with the password |
+| `APP_AUTH_PASSWORD` | unset | Optional Basic auth password |
+
+Leave both auth variables unset and the app runs open. Set both and every page asks for those credentials. `/health` stays open so the container health check can run. There is no registration and no user account store. A username without a password, or the other way around, stops the app from starting.
+
+## Security
+
+This app is for one household. It has no public registration.
+
+Run it behind Cloudflare Access, reached through a Cloudflare Tunnel whose `cloudflared` connector runs on this same host. The Compose file publishes the port on `127.0.0.1` only, so the tunnel is the path in. Do not bind `0.0.0.0`, do not forward the port from the router, and do not expose it to the internet any other way.
+
+The app does not call out to other services. Fonts, HTMX, and Chart.js are in the image.
+
+## Upgrade
+
+From the project directory:
 
 ```bash
-docker compose stop
-```
-
-Start it again:
-
-```bash
-docker compose start
-```
-
-Recreate the container after a code change, or to confirm persistence (SRS FR-20):
-
-```bash
-docker compose down
+git pull
 docker compose up --build -d --wait
 ```
 
-`docker compose down` removes the container and keeps `./data`. The database file is `./data/app.db`.
-
-Confirm the file is still there and still has the migration stamp:
+The container applies database migrations on startup (`alembic upgrade head`) before it serves pages. `./data` is left in place. Confirm the stamp after an upgrade:
 
 ```bash
-test -f data/app.db && python -c "import sqlite3; print(sqlite3.connect('data/app.db').execute('select version_num from alembic_version').fetchone())"
+python -c "import sqlite3; print(sqlite3.connect('data/app.db').execute('select version_num from alembic_version').fetchone())"
 ```
 
-A surviving database prints `('0007_spend',)`.
+A current database prints `('0008_integrity',)`.
 
-To back up, stop the container and copy `data/app.db`. Copy that file back to restore. Start the container only after the copy finishes.
+## Backup and restore
+
+Backups use SQLite's online backup API, not a copy of the live file.
+
+Download a copy from **Settings → Download backup**. The same file is written to `data/backups/`.
+
+From the host, while the container is running:
+
+```bash
+docker compose exec web python -m app.cli backup
+```
+
+That prints a path such as `/data/backups/meal-shopper-20261108-184500.db`, which is `data/backups/` on the host.
+
+Restore only while the app is stopped, so nothing writes the old file during the replace:
+
+```bash
+docker compose stop
+docker compose run --rm --no-deps --entrypoint python web \
+  -m app.cli restore /data/backups/meal-shopper-20261108-184500.db
+docker compose up -d --wait
+```
+
+Use the backup filename you actually have. The restore copies that file onto `/data/app.db` with the same backup API and removes leftover `-wal` and `-shm` files.
+
+## Demo data
+
+This is optional and does not run on startup. It adds a few ingredients, two meals, and the current week's plan. A second run does nothing if Tomato pasta is already there.
+
+```bash
+docker compose exec web python -m app.cli seed
+```
 
 ## Tests
 
@@ -111,5 +103,18 @@ To back up, stop the container and copy `data/app.db`. Copy that file back to re
 python -m venv .venv
 . .venv/bin/activate
 pip install -e ".[dev]"
+ruff check .
+ruff format --check .
 pytest
 ```
+
+GitHub Actions runs those three commands on every push and pull request. The meal-plan PDF needs the DejaVu fonts (`fonts-dejavu-core`).
+
+## Troubleshooting
+
+- **The browser cannot connect.** The port is `127.0.0.1:5373`, not port 8000, and it is not published on the LAN. Use the machine itself, or the Cloudflare Tunnel.
+- **The health check is ok but pages ask for a password.** `APP_AUTH_USER` and `APP_AUTH_PASSWORD` are set. Use those credentials, or unset both and recreate the container.
+- **The container exits straight away and mentions auth.** One of the auth variables is set and the other is empty. Set both, or neither.
+- **Upgrade fails during migration.** Leave `./data` as it is and restore the latest file from `data/backups/` with the commands above. Do not delete `data/app.db` first.
+- **A backup file will not open.** Take a new one from Settings or `python -m app.cli backup`. Do not copy `data/app.db` while the container is running.
+- **Demo data did not appear.** The command reports that it is already present when a meal named Tomato pasta exists.

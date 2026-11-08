@@ -43,6 +43,10 @@ class PlannerEntry(Base):
             "entry_type IN ('meal', 'takeaway', 'blank')",
             name="ck_planner_entries_entry_type",
         ),
+        CheckConstraint(
+            "takeaway_price_pence IS NULL OR takeaway_price_pence >= 0",
+            name="ck_planner_entries_takeaway_price",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)

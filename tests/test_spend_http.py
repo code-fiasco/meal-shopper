@@ -108,6 +108,7 @@ def test_recording_spend_keeps_the_estimate_out_of_the_total(
     assert "Unrecorded" in body
     assert "Estimated outlay" in body
     assert "Grocery (actual)" in body
+    assert "Takeaway" in body
     assert 'src="/static/chart.umd.min.js"' in body
     assert "https://" not in body
     assert "http://" not in body
