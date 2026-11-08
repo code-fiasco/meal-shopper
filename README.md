@@ -31,8 +31,9 @@ Ingredients and shops are usable:
 - Print the week in A4 landscape, with meal costs optional
 - Record pantry stock in each ingredient's canonical unit, and adjust it by hand
 - Generate a week's shopping list from planned meals, deduct pantry stock once, and round up to packs
+- Adjust that list in the browser: change the pack, quantity, price, or stock, and add items that are not on a recipe
 
-The shopping page and spending are not built yet. The container still serves navigation and a health check, and the SQLite database lives on a host mount.
+Spending is not built yet. The container still serves navigation and a health check, and the SQLite database lives on a host mount.
 
 ## Configuration
 

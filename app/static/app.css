@@ -405,6 +405,45 @@ body.print-plan {
   }
 }
 
+.shop-line {
+  margin: 0.75rem 0 1rem;
+  padding: 0.85rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+}
+
+.shop-line h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+}
+
+.shop-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin: 0.35rem 0 0.75rem;
+}
+
+.shop-facts p,
+.badge {
+  margin: 0;
+}
+
+.badge {
+  display: inline-block;
+  margin: 0.15rem 0.35rem 0.15rem 0;
+  padding: 0.1rem 0.45rem;
+  border: 2px solid #44403c;
+  font-weight: 700;
+}
+
+.shop-totals {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 2px solid var(--header);
+}
+
 @media print {
   .no-print,
   .site-header,

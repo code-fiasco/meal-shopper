@@ -1,0 +1,118 @@
+<article class="shop-line">
+  <h3>{{ item.line.description }}</h3>
+  {% if item.manually_adjusted %}
+  <p class="badge">Manually adjusted</p>
+  {% endif %}
+  {% if item.missing_price or (item.line.source == "manual" and item.line.manual_price_pence is none) %}
+  <p class="badge">No price</p>
+  {% endif %}
+  {% if item.off_plan %}
+  <p class="status">No longer on the plan</p>
+  {% endif %}
+  {% if item.line.source == "generated" %}
+  <div class="shop-facts">
+    <p>Recipe needs {{ item.line.required_quantity | qty(item.line.unit_snapshot) }}</p>
+    <p>Stock used {{ item.line.stock_allocated | qty(item.line.unit_snapshot) }}</p>
+    <p>Buy {{ item.line.net_quantity | qty(item.line.unit_snapshot) }}</p>
+    {% if item.line.shop_name %}
+    <p>{{ item.line.shop_name }}{% if item.line.pack_label %}, {{ item.line.pack_label }}{% endif %}</p>
+    {% endif %}
+    <p>Packs {{ item.line.pack_count }}</p>
+    {% if item.line.estimated_price_pence is not none %}
+    <p>Estimated cost {{ item.line.estimated_price_pence | gbp }}</p>
+    {% endif %}
+  </div>
+  {% if item.line.quantity_overridden %}
+  <p>Buying {{ item.line.quantity_override | qty(item.line.unit_snapshot) }} after your adjustment</p>
+  {% endif %}
+  {% if item.packs %}
+  <form method="post" action="/shopping/lines/{{ item.line.id }}" hx-post="/shopping/lines/{{ item.line.id }}" hx-target="#shopping-body" hx-swap="outerHTML">
+    <input type="hidden" name="action" value="option">
+    <div class="field">
+      <label for="option-{{ item.line.id }}">Shop and pack</label>
+      <select id="option-{{ item.line.id }}" name="option_id"{% if item.errors.option_id %} aria-invalid="true" aria-describedby="option-{{ item.line.id }}-error"{% endif %}>
+        {% for pack in item.packs %}
+        <option value="{{ pack.id }}"{% if pack.id == item.line.selected_purchase_option_id %} selected{% endif %}>{{ pack.shop_name }}, {{ pack.pack_label }}, {{ pack.price_pence | gbp }} ({{ pack.unit_price | gbp_exact }}/{{ pack.unit_symbol }})</option>
+        {% endfor %}
+      </select>
+      {% if item.errors.option_id %}
+      <p class="field-error" id="option-{{ item.line.id }}-error" role="alert">Error: {{ item.errors.option_id }}</p>
+      {% endif %}
+    </div>
+    <button type="submit">Use this pack</button>
+  </form>
+  {% endif %}
+  <form method="post" action="/shopping/lines/{{ item.line.id }}" hx-post="/shopping/lines/{{ item.line.id }}" hx-target="#shopping-body" hx-swap="outerHTML">
+    <input type="hidden" name="action" value="quantity">
+    <div class="field">
+      <label for="quantity-{{ item.line.id }}">Quantity to buy ({{ item.line.unit_snapshot }})</label>
+      <input id="quantity-{{ item.line.id }}" name="quantity" type="text" inputmode="decimal" value="{% if item.line.quantity_overridden %}{{ item.line.quantity_override | qty_input }}{% else %}{{ item.line.net_quantity | qty_input }}{% endif %}"{% if item.errors.quantity %} aria-invalid="true" aria-describedby="quantity-{{ item.line.id }}-error"{% endif %}>
+      {% if item.errors.quantity %}
+      <p class="field-error" id="quantity-{{ item.line.id }}-error" role="alert">Error: {{ item.errors.quantity }}</p>
+      {% endif %}
+    </div>
+    <button type="submit">Update quantity</button>
+  </form>
+  <form method="post" action="/shopping/lines/{{ item.line.id }}" hx-post="/shopping/lines/{{ item.line.id }}" hx-target="#shopping-body" hx-swap="outerHTML">
+    <input type="hidden" name="action" value="packs">
+    <div class="field">
+      <label for="packs-{{ item.line.id }}">Pack count</label>
+      <input id="packs-{{ item.line.id }}" name="pack_count" type="text" inputmode="numeric" value="{{ item.line.pack_count }}"{% if item.errors.pack_count %} aria-invalid="true" aria-describedby="packs-{{ item.line.id }}-error"{% endif %}>
+      {% if item.errors.pack_count %}
+      <p class="field-error" id="packs-{{ item.line.id }}-error" role="alert">Error: {{ item.errors.pack_count }}</p>
+      {% endif %}
+    </div>
+    <button type="submit">Update pack count</button>
+  </form>
+  <form method="post" action="/shopping/lines/{{ item.line.id }}" hx-post="/shopping/lines/{{ item.line.id }}" hx-target="#shopping-body" hx-swap="outerHTML">
+    <input type="hidden" name="action" value="price">
+    <div class="field">
+      <label for="price-{{ item.line.id }}">Pack price (£)</label>
+      <input id="price-{{ item.line.id }}" name="price" type="text" inputmode="decimal" value="{% if item.line.pack_price_pence is not none %}{{ item.line.pack_price_pence | gbp_input }}{% endif %}"{% if item.errors.price %} aria-invalid="true" aria-describedby="price-{{ item.line.id }}-error"{% endif %}>
+      {% if item.errors.price %}
+      <p class="field-error" id="price-{{ item.line.id }}-error" role="alert">Error: {{ item.errors.price }}</p>
+      {% endif %}
+    </div>
+    <button type="submit">Update price</button>
+  </form>
+  <form method="post" action="/shopping/lines/{{ item.line.id }}" hx-post="/shopping/lines/{{ item.line.id }}" hx-target="#shopping-body" hx-swap="outerHTML">
+    <input type="hidden" name="action" value="have">
+    <button type="submit" data-confirm="Record enough {{ item.line.description }} to cover this recipe?" onclick="return confirm(this.dataset.confirm)">I already have this</button>
+  </form>
+  <form method="post" action="/shopping/lines/{{ item.line.id }}" hx-post="/shopping/lines/{{ item.line.id }}" hx-target="#shopping-body" hx-swap="outerHTML">
+    <input type="hidden" name="action" value="remove">
+    <button type="submit" class="button-secondary" data-confirm="Remove {{ item.line.description }} from this shopping list?" onclick="return confirm(this.dataset.confirm)">Remove</button>
+  </form>
+  {% if item.stock %}
+  <details>
+    <summary>Set stock</summary>
+    {% with control=item.stock %}
+    {% include "partials/stock_control.html" %}
+    {% endwith %}
+  </details>
+  {% endif %}
+  {% else %}
+  <div class="shop-facts">
+    {% if item.line.unit_snapshot %}
+    <p>{{ item.line.required_quantity | qty(item.line.unit_snapshot) }}</p>
+    {% endif %}
+    {% if item.line.shop_name %}
+    <p>{{ item.line.shop_name }}</p>
+    {% endif %}
+    {% if item.line.manual_price_pence is not none %}
+    <p>Price {{ item.line.manual_price_pence | gbp }}</p>
+    {% endif %}
+  </div>
+  <form method="post" action="/shopping/lines/{{ item.line.id }}" hx-post="/shopping/lines/{{ item.line.id }}" hx-target="#shopping-body" hx-swap="outerHTML">
+    <input type="hidden" name="action" value="price">
+    <div class="field">
+      <label for="price-{{ item.line.id }}">Price (£)</label>
+      <input id="price-{{ item.line.id }}" name="price" type="text" inputmode="decimal" value="{% if item.line.manual_price_pence is not none %}{{ item.line.manual_price_pence | gbp_input }}{% endif %}"{% if item.errors.price %} aria-invalid="true" aria-describedby="price-{{ item.line.id }}-error"{% endif %}>
+      {% if item.errors.price %}
+      <p class="field-error" id="price-{{ item.line.id }}-error" role="alert">Error: {{ item.errors.price }}</p>
+      {% endif %}
+    </div>
+    <button type="submit">Update price</button>
+  </form>
+  {% endif %}
+</article>

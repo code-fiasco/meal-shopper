@@ -16,11 +16,15 @@ from app.services.purchase_options import change_purchase_option, create_purchas
 from app.services.shopping import (
     add_manual_line,
     choose_purchase_option,
+    cover_requirement_with_stock,
     generate_shopping_list,
     kept_without_requirement,
     packs_to_buy,
+    refresh_shopping_list,
     remove_generated_line,
     restore_removed_line,
+    set_line_price,
+    set_pack_count_override,
     set_quantity_override,
     shopping_totals,
 )
@@ -626,6 +630,158 @@ def test_negative_override_is_rejected(session: Session) -> None:
     with pytest.raises(FieldValidationError, match="cannot be negative"):
         set_quantity_override(line, Decimal("-1"))
     assert line.quantity_overridden is False
+
+
+def test_refresh_reports_new_updated_and_removed_lines(session: Session) -> None:
+    grams = _unit(session, "g")
+    beef = create_ingredient(session, name="Minced beef", canonical_unit=grams)
+    beef = beef.ingredient
+    create_purchase_option(
+        session,
+        ingredient=beef,
+        shop=_shop(session, "Butcher"),
+        pack_quantity=Decimal("500"),
+        pack_label="500g pack",
+        price_pence=350,
+    )
+    meal = _meal(session, "Ragu", [RawLine(str(beef.id), "200", str(grams.id), "")])
+    week = _plan(session, [(MONDAY, "lunch", meal.id)])
+    _shopping_list, first = refresh_shopping_list(session, week.id)
+    assert first.label() == "1 new"
+    _unchanged, second = refresh_shopping_list(session, week.id)
+    assert second.label() == "No changes"
+    revised, errors = prepare_lines(
+        session, [RawLine(str(beef.id), "500", str(grams.id), "")]
+    )
+    assert errors == {}
+    save_meal(
+        session, meal, name="Ragu", description=None, instructions=None, lines=revised
+    )
+    _updated, third = refresh_shopping_list(session, week.id)
+    assert third.label() == "1 updated"
+    rice = create_ingredient(session, name="Rice", canonical_unit=grams).ingredient
+    with_rice, errors = prepare_lines(
+        session,
+        [
+            RawLine(str(beef.id), "500", str(grams.id), ""),
+            RawLine(str(rice.id), "200", str(grams.id), ""),
+        ],
+    )
+    assert errors == {}
+    save_meal(
+        session,
+        meal,
+        name="Ragu",
+        description=None,
+        instructions=None,
+        lines=with_rice,
+    )
+    _added, fourth = refresh_shopping_list(session, week.id)
+    assert fourth.label() == "1 new"
+    beef_only, errors = prepare_lines(
+        session, [RawLine(str(beef.id), "500", str(grams.id), "")]
+    )
+    assert errors == {}
+    save_meal(
+        session,
+        meal,
+        name="Ragu",
+        description=None,
+        instructions=None,
+        lines=beef_only,
+    )
+    _dropped, fifth = refresh_shopping_list(session, week.id)
+    assert fifth.label() == "1 removed"
+
+
+def test_pack_count_override_yields_to_a_quantity_edit(session: Session) -> None:
+    grams = _unit(session, "g")
+    beef = create_ingredient(session, name="Minced beef", canonical_unit=grams)
+    beef = beef.ingredient
+    create_purchase_option(
+        session,
+        ingredient=beef,
+        shop=_shop(session, "Butcher"),
+        pack_quantity=Decimal("500"),
+        pack_label="500g pack",
+        price_pence=350,
+    )
+    meal = _meal(session, "Ragu", [RawLine(str(beef.id), "200", str(grams.id), "")])
+    week = _plan(session, [(MONDAY, "lunch", meal.id)])
+    shopping_list = generate_shopping_list(session, week.id)
+    line = _line(shopping_list, "Minced beef")
+    set_pack_count_override(line, 3)
+    assert line.pack_count == 3
+    assert line.estimated_price_pence == 1050
+    refreshed = generate_shopping_list(session, week.id)
+    kept = _line(refreshed, "Minced beef")
+    assert kept.pack_count == 3
+    set_quantity_override(kept, Decimal("100"))
+    assert kept.pack_count_override is None
+    assert kept.pack_count == 1
+    with pytest.raises(FieldValidationError, match="cannot be negative"):
+        set_pack_count_override(kept, -1)
+
+
+def test_line_price_is_a_list_snapshot(session: Session) -> None:
+    grams = _unit(session, "g")
+    beef = create_ingredient(session, name="Minced beef", canonical_unit=grams)
+    beef = beef.ingredient
+    option = create_purchase_option(
+        session,
+        ingredient=beef,
+        shop=_shop(session, "Butcher"),
+        pack_quantity=Decimal("500"),
+        pack_label="500g pack",
+        price_pence=350,
+    )
+    meal = _meal(session, "Ragu", [RawLine(str(beef.id), "600", str(grams.id), "")])
+    week = _plan(session, [(MONDAY, "lunch", meal.id)])
+    shopping_list = generate_shopping_list(session, week.id)
+    line = _line(shopping_list, "Minced beef")
+    set_line_price(line, 200)
+    assert line.estimated_price_pence == 400
+    assert option.price_pence == 350
+    manual = add_manual_line(session, shopping_list, description="Washing up liquid")
+    set_line_price(manual, 150)
+    assert manual.manual_price_pence == 150
+    with pytest.raises(FieldValidationError, match="price"):
+        set_line_price(line, None)  # type: ignore[arg-type]
+
+
+def test_covering_a_requirement_does_not_reduce_larger_stock(session: Session) -> None:
+    grams = _unit(session, "g")
+    beef = create_ingredient(session, name="Minced beef", canonical_unit=grams)
+    beef = beef.ingredient
+    create_purchase_option(
+        session,
+        ingredient=beef,
+        shop=_shop(session, "Butcher"),
+        pack_quantity=Decimal("500"),
+        pack_label="500g pack",
+        price_pence=350,
+    )
+    meal = _meal(session, "Ragu", [RawLine(str(beef.id), "200", str(grams.id), "")])
+    week = _plan(session, [(MONDAY, "lunch", meal.id)])
+    shopping_list = generate_shopping_list(session, week.id)
+    summary = cover_requirement_with_stock(session, _line(shopping_list, "Minced beef"))
+    assert summary.label() == "1 updated"
+    covered = _line(shopping_list, "Minced beef")
+    assert covered.net_quantity == Decimal("0")
+    assert covered.pack_count == 0
+    assert get_stock_map(session)[beef.id] == Decimal("200")
+    again = cover_requirement_with_stock(session, covered)
+    assert again.label() == "No changes"
+    assert get_stock_map(session)[beef.id] == Decimal("200")
+    adjust_stock(
+        session,
+        ingredient_id=beef.id,
+        action=SET,
+        quantity="500",
+        unit_id=str(grams.id),
+    )
+    cover_requirement_with_stock(session, covered)
+    assert get_stock_map(session)[beef.id] == Decimal("500")
 
 
 def test_generate_rejects_an_unknown_week(session: Session) -> None:

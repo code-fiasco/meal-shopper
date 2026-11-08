@@ -1,0 +1,88 @@
+<div id="shopping-body">
+  {% if page.notice %}
+  <p class="status" role="status">{{ page.notice }}</p>
+  {% endif %}
+  {% if page.shopping_list %}
+  <section>
+    <h2>To buy</h2>
+    {% if page.generated %}
+    {% for item in page.generated %}
+    {% include "partials/shopping_line.html" %}
+    {% endfor %}
+    {% else %}
+    <p>Nothing to buy yet.</p>
+    {% endif %}
+  </section>
+  {% else %}
+  <p>Generate a list for this week. Weeks appear after you plan a meal, takeaway, or blank slot.</p>
+  {% endif %}
+  <section>
+    <h2>Removed items</h2>
+    {% if page.removed %}
+    {% for item in page.removed %}
+    <article class="shop-line">
+      <h3>{{ item.line.description }}</h3>
+      <p>Recipe needs {{ item.line.required_quantity | qty(item.line.unit_snapshot) }}</p>
+      <form method="post" action="/shopping/lines/{{ item.line.id }}" hx-post="/shopping/lines/{{ item.line.id }}" hx-target="#shopping-body" hx-swap="outerHTML">
+        <input type="hidden" name="action" value="restore">
+        <button type="submit">Restore</button>
+      </form>
+    </article>
+    {% endfor %}
+    {% else %}
+    <p>None removed.</p>
+    {% endif %}
+  </section>
+  <section>
+    <h2>Add an item</h2>
+    <form method="post" action="/shopping/manual" hx-post="/shopping/manual" hx-target="#shopping-body" hx-swap="outerHTML">
+      <input type="hidden" name="date" value="{{ page.start.isoformat() }}">
+      <div class="field">
+        <label for="manual-name">Name</label>
+        <input id="manual-name" name="description" type="text" value="{{ page.form_values.description | default('') }}"{% if page.form_errors.description %} aria-invalid="true" aria-describedby="manual-name-error"{% endif %}>
+        {% if page.form_errors.description %}
+        <p class="field-error" id="manual-name-error" role="alert">Error: {{ page.form_errors.description }}</p>
+        {% endif %}
+      </div>
+      <div class="field">
+        <label for="manual-quantity">Quantity</label>
+        <input id="manual-quantity" name="quantity" type="text" inputmode="decimal" value="{{ page.form_values.quantity | default('') }}"{% if page.form_errors.quantity %} aria-invalid="true" aria-describedby="manual-quantity-error"{% endif %}>
+        {% if page.form_errors.quantity %}
+        <p class="field-error" id="manual-quantity-error" role="alert">Error: {{ page.form_errors.quantity }}</p>
+        {% endif %}
+      </div>
+      <div class="field">
+        <label for="manual-unit">Unit</label>
+        <input id="manual-unit" name="unit" type="text" value="{{ page.form_values.unit | default('') }}">
+      </div>
+      <div class="field">
+        <label for="manual-price">Price</label>
+        <input id="manual-price" name="price" type="text" inputmode="decimal" value="{{ page.form_values.price | default('') }}"{% if page.form_errors.price %} aria-invalid="true" aria-describedby="manual-price-error"{% endif %}>
+        {% if page.form_errors.price %}
+        <p class="field-error" id="manual-price-error" role="alert">Error: {{ page.form_errors.price }}</p>
+        {% endif %}
+      </div>
+      <div class="field">
+        <label for="manual-shop">Shop</label>
+        <select id="manual-shop" name="shop_id">
+          <option value="">No shop</option>
+          {% for shop in shops %}
+          <option value="{{ shop.id }}"{% if page.form_values.shop_id | default('') == shop.id | string %} selected{% endif %}>{{ shop.name }}</option>
+          {% endfor %}
+        </select>
+        {% if page.form_errors.shop_id %}
+        <p class="field-error" role="alert">Error: {{ page.form_errors.shop_id }}</p>
+        {% endif %}
+      </div>
+      <button type="submit">Add item</button>
+    </form>
+    {% if page.manual %}
+    {% for item in page.manual %}
+    {% include "partials/shopping_line.html" %}
+    {% endfor %}
+    {% endif %}
+  </section>
+  {% if page.totals %}
+  {% include "partials/shopping_totals.html" %}
+  {% endif %}
+</div>

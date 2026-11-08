@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Shopping · Meal Shopper{% endblock %}
+{% block content %}
+<h1>Shopping</h1>
+<p>Generate one list from the selected week. Buying whole packs may leave food you do not use this week.</p>
+<p class="week-range">{{ page.label }}</p>
+{% if page.is_current %}
+<p>This week</p>
+{% endif %}
+<p class="actions">
+  <a class="button button-secondary" href="/shopping?date={{ page.previous.isoformat() }}">Previous week</a>
+  <a class="button button-secondary" href="/shopping?date={{ page.following.isoformat() }}">Next week</a>
+  <a class="button button-secondary" href="/shopping">This week</a>
+</p>
+<form class="filters" method="get" action="/shopping">
+  <div class="field">
+    <label for="jump-date">Jump to date</label>
+    <input id="jump-date" type="date" name="date" value="{{ page.start.isoformat() }}"{% if page.error == "Choose a valid date." %} aria-invalid="true" aria-describedby="jump-date-error"{% endif %}>
+    {% if page.error == "Choose a valid date." %}
+    <p class="field-error" id="jump-date-error" role="alert">Error: {{ page.error }}</p>
+    {% endif %}
+  </div>
+  <button type="submit">Show week</button>
+</form>
+<form method="post" action="/shopping/generate">
+  <input type="hidden" name="date" value="{{ page.start.isoformat() }}">
+  <button type="submit">{% if page.shopping_list %}Refresh list{% else %}Generate list{% endif %}</button>
+  {% if page.error and page.error != "Choose a valid date." %}
+  <p class="field-error" role="alert">Error: {{ page.error }}</p>
+  {% endif %}
+</form>
+{% include "partials/shopping_body.html" %}
+{% endblock %}

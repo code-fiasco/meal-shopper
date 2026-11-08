@@ -5,6 +5,7 @@ Generating a list does not change pantry quantities.
 """
 
 from dataclasses import dataclass
+from datetime import date
 from decimal import ROUND_CEILING, Decimal
 
 from sqlalchemy import select
@@ -22,8 +23,21 @@ from app.models import (
 )
 from app.models.types import utcnow
 from app.services.parsing import FieldValidationError
-from app.services.planner import IngredientNeed, ingredient_requirements
-from app.services.stock import get_stock_map
+from app.services.planner import (
+    IngredientNeed,
+    format_week_range,
+    get_week,
+    ingredient_requirements,
+    shift_week,
+    week_start_for,
+)
+from app.services.stock import (
+    SET,
+    StockControl,
+    adjust_stock,
+    get_stock_map,
+    stock_control,
+)
 from app.services.units import allocated_cost_pence, unit_price_per_canonical
 
 GENERATED = "generated"
@@ -161,6 +175,33 @@ def set_quantity_override(line: ShoppingListLine, quantity: Decimal) -> None:
         )
     line.quantity_override = _require_quantity(quantity)
     line.quantity_overridden = True
+    line.pack_count_override = None
+    _recompute_packs(line)
+
+
+def set_pack_count_override(line: ShoppingListLine, count: int) -> None:
+    """Buy a chosen number of packs and keep that choice across regeneration."""
+    if line.source != GENERATED:
+        raise FieldValidationError(
+            "pack_count", "Only a generated ingredient can have a pack count."
+        )
+    if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+        raise FieldValidationError("pack_count", "Pack count cannot be negative.")
+    line.pack_count_override = count
+    _recompute_packs(line)
+
+
+def set_line_price(line: ShoppingListLine, price_pence: int) -> None:
+    """Set the price used by this list. The ingredient's pack price is unchanged."""
+    price = _require_pence(price_pence)
+    if price is None:
+        raise FieldValidationError("price", "Enter a price in pounds, such as 1.79.")
+    if line.source == MANUAL:
+        line.manual_price_pence = price
+        return
+    if line.pack_quantity is None:
+        raise FieldValidationError("price", "This ingredient has no pack to price.")
+    line.pack_price_pence = price
     _recompute_packs(line)
 
 
@@ -189,6 +230,69 @@ def shopping_totals(shopping_list: ShoppingList) -> ShoppingTotals:
     )
 
 
+@dataclass(frozen=True)
+class RefreshSummary:
+    """How many generated lines a refresh created, changed, or dropped."""
+
+    created: int
+    updated: int
+    removed: int
+
+    def label(self) -> str:
+        """Short status, for example '2 updated, 1 new'."""
+        parts: list[str] = []
+        if self.updated:
+            parts.append(f"{self.updated} updated")
+        if self.created:
+            parts.append(f"{self.created} new")
+        if self.removed:
+            parts.append(f"{self.removed} removed")
+        if not parts:
+            return "No changes"
+        return ", ".join(parts)
+
+
+def refresh_shopping_list(
+    session: Session, week_id: int
+) -> tuple[ShoppingList, RefreshSummary]:
+    """Regenerate the week's list and report what changed."""
+    before = _generated_snapshot(_existing_list(session, week_id))
+    shopping_list = generate_shopping_list(session, week_id)
+    return shopping_list, _summarise(before, shopping_list)
+
+
+def cover_requirement_with_stock(
+    session: Session, line: ShoppingListLine
+) -> RefreshSummary:
+    """Record enough pantry stock to cover this line, then refresh the list."""
+    if line.source != GENERATED or line.ingredient_id is None:
+        raise FieldValidationError(
+            "line", "Pantry stock can cover a generated ingredient."
+        )
+    if line.required_quantity <= 0:
+        raise FieldValidationError(
+            "line", "This ingredient has no recipe requirement to cover."
+        )
+    ingredient = session.scalar(
+        select(Ingredient)
+        .where(Ingredient.id == line.ingredient_id)
+        .options(selectinload(Ingredient.canonical_unit))
+    )
+    if ingredient is None:
+        raise FieldValidationError("line", "Choose an ingredient.")
+    held = get_stock_map(session).get(ingredient.id, Decimal(0))
+    if held < line.required_quantity:
+        adjust_stock(
+            session,
+            ingredient_id=ingredient.id,
+            action=SET,
+            quantity=format(line.required_quantity, "f"),
+            unit_id=str(ingredient.canonical_unit_id),
+        )
+    _, summary = refresh_shopping_list(session, _week_id(session, line))
+    return summary
+
+
 def kept_without_requirement(line: ShoppingListLine) -> bool:
     """True when a checked buy was kept after the plan stopped needing it."""
     return (
@@ -197,6 +301,220 @@ def kept_without_requirement(line: ShoppingListLine) -> bool:
         and not line.removed
         and line.required_quantity == 0
     )
+
+
+@dataclass(frozen=True)
+class PackChoice:
+    """One active pack the shopper can choose for this list."""
+
+    id: int
+    shop_name: str
+    pack_label: str
+    pack_quantity: Decimal
+    price_pence: int
+    unit_price: Decimal
+    unit_symbol: str
+
+
+@dataclass
+class ShoppingLineView:
+    """A list row plus the packs and stock control the page can show."""
+
+    line: ShoppingListLine
+    packs: list[PackChoice]
+    stock: StockControl | None
+    missing_price: bool
+    manually_adjusted: bool
+    off_plan: bool
+    errors: dict[str, str]
+
+
+@dataclass
+class ShoppingPage:
+    """One week of the shopping screen."""
+
+    start: date
+    label: str
+    previous: date
+    following: date
+    is_current: bool
+    shopping_list: ShoppingList | None
+    generated: list[ShoppingLineView]
+    manual: list[ShoppingLineView]
+    removed: list[ShoppingLineView]
+    totals: ShoppingTotals | None
+    notice: str | None
+    error: str | None
+    form_errors: dict[str, str]
+    form_values: dict[str, str]
+
+
+def shopping_page_for(
+    session: Session,
+    day: date,
+    *,
+    today: date,
+    notice: str | None = None,
+    error: str | None = None,
+    line_errors: dict[int, dict[str, str]] | None = None,
+    form_errors: dict[str, str] | None = None,
+    form_values: dict[str, str] | None = None,
+) -> ShoppingPage:
+    """Assemble the shopping screen without creating a list or a week."""
+    start = week_start_for(day)
+    week = get_week(session, start)
+    shopping_list = _existing_list(session, week.id) if week is not None else None
+    errors = line_errors or {}
+    generated: list[ShoppingLineView] = []
+    manual: list[ShoppingLineView] = []
+    removed: list[ShoppingLineView] = []
+    if shopping_list is not None:
+        grouped = _views(session, shopping_list, errors)
+        generated, manual, removed = grouped
+    totals = None if shopping_list is None else shopping_totals(shopping_list)
+    return ShoppingPage(
+        start=start,
+        label=format_week_range(start),
+        previous=shift_week(start, -1),
+        following=shift_week(start, 1),
+        is_current=start == week_start_for(today),
+        shopping_list=shopping_list,
+        generated=generated,
+        manual=manual,
+        removed=removed,
+        totals=totals,
+        notice=notice,
+        error=error,
+        form_errors=form_errors or {},
+        form_values=form_values or {},
+    )
+
+
+def _views(
+    session: Session,
+    shopping_list: ShoppingList,
+    errors: dict[int, dict[str, str]],
+) -> tuple[list[ShoppingLineView], list[ShoppingLineView], list[ShoppingLineView]]:
+    ingredient_ids = [
+        line.ingredient_id
+        for line in shopping_list.lines
+        if line.ingredient_id is not None
+    ]
+    options = _options_for(session, ingredient_ids)
+    generated: list[ShoppingLineView] = []
+    manual: list[ShoppingLineView] = []
+    removed: list[ShoppingLineView] = []
+    for line in shopping_list.lines:
+        view = _line_view(session, line, options, errors.get(line.id, {}))
+        if line.source == MANUAL:
+            manual.append(view)
+        elif line.removed:
+            removed.append(view)
+        else:
+            generated.append(view)
+    return generated, manual, removed
+
+
+def _line_view(
+    session: Session,
+    line: ShoppingListLine,
+    options: dict[int, list[PurchaseOption]],
+    errors: dict[str, str],
+) -> ShoppingLineView:
+    packs: list[PackChoice] = []
+    stock = None
+    if line.ingredient_id is not None:
+        active = [
+            option for option in options.get(line.ingredient_id, []) if option.is_active
+        ]
+        active.sort(key=_price_key)
+        packs = [_pack_choice(option, line.unit_snapshot) for option in active]
+        if line.source == GENERATED and not line.removed:
+            stock = stock_control(session, line.ingredient_id, placement="list")
+    return ShoppingLineView(
+        line=line,
+        packs=packs,
+        stock=stock,
+        missing_price=_missing_price(line),
+        manually_adjusted=(
+            line.quantity_overridden or line.pack_count_override is not None
+        ),
+        off_plan=kept_without_requirement(line),
+        errors=errors,
+    )
+
+
+def _pack_choice(option: PurchaseOption, unit_symbol: str) -> PackChoice:
+    return PackChoice(
+        id=option.id,
+        shop_name=option.shop.name,
+        pack_label=option.pack_label,
+        pack_quantity=option.pack_quantity,
+        price_pence=option.price_pence,
+        unit_price=unit_price_per_canonical(option),
+        unit_symbol=unit_symbol,
+    )
+
+
+@dataclass(frozen=True)
+class _Snap:
+    required: Decimal
+    stock: Decimal
+    net: Decimal
+    pack_count: int
+    price: int | None
+    option_id: int | None
+    removed: bool
+
+
+def _existing_list(session: Session, week_id: int) -> ShoppingList | None:
+    return session.scalar(
+        select(ShoppingList)
+        .where(ShoppingList.planner_week_id == week_id)
+        .options(selectinload(ShoppingList.lines))
+    )
+
+
+def _week_id(session: Session, line: ShoppingListLine) -> int:
+    shopping_list = line.shopping_list or session.get(ShoppingList, line.list_id)
+    if shopping_list is None:
+        raise FieldValidationError("line", "Choose a shopping list.")
+    return shopping_list.planner_week_id
+
+
+def _generated_snapshot(
+    shopping_list: ShoppingList | None,
+) -> dict[int, _Snap]:
+    if shopping_list is None:
+        return {}
+    snaps: dict[int, _Snap] = {}
+    for line in shopping_list.lines:
+        if line.source != GENERATED or line.ingredient_id is None:
+            continue
+        snaps[line.ingredient_id] = _Snap(
+            required=line.required_quantity,
+            stock=line.stock_allocated,
+            net=line.net_quantity,
+            pack_count=line.pack_count,
+            price=line.estimated_price_pence,
+            option_id=line.selected_purchase_option_id,
+            removed=line.removed,
+        )
+    return snaps
+
+
+def _summarise(before: dict[int, _Snap], shopping_list: ShoppingList) -> RefreshSummary:
+    after = _generated_snapshot(shopping_list)
+    created = 0
+    updated = 0
+    for ingredient_id, snap in after.items():
+        previous = before.get(ingredient_id)
+        if previous is None:
+            created += 1
+        elif previous != snap:
+            updated += 1
+    removed = sum(1 for ingredient_id in before if ingredient_id not in after)
+    return RefreshSummary(created=created, updated=updated, removed=removed)
 
 
 def _list_for_week(session: Session, week: PlannerWeek) -> ShoppingList:

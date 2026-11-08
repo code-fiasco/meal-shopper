@@ -1,0 +1,10 @@
+<section class="shop-totals">
+  <h2>Estimated shopping outlay</h2>
+  <p>{{ page.totals.outlay_pence | gbp }}</p>
+  {% if not page.totals.is_complete %}
+  <p class="status">incomplete: missing price for {{ page.totals.missing_ingredients | join(", ") }}</p>
+  {% endif %}
+  <h2>Recipe consumption cost</h2>
+  <p>{{ page.totals.consumption_pence | gbp }}</p>
+  <p>Buying whole packs may leave unused stock. Estimated shopping outlay is what you pay at the shop. Recipe consumption cost is the value of what the recipes use, before stock is taken off.</p>
+</section>
